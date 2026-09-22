@@ -33,7 +33,7 @@ body {
 main {
   width: min(70rem, calc(100% - 2rem));
   margin: 0 auto;
-  padding: clamp(3rem, 9vw, 8rem) 0;
+  padding: clamp(2rem, 7vw, 6rem) 0;
 }
 
 .hero {
@@ -64,11 +64,101 @@ h1 {
   line-height: 1.65;
 }
 
+.signal-panel {
+  margin-top: 2.5rem;
+  overflow: hidden;
+  border: 1px solid #28493a;
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, rgb(92 227 151 / 8%), transparent 45%), #0c1814;
+}
+
+.signal-state {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #213a30;
+  color: #b8cec1;
+  font-weight: 700;
+}
+
+.signal-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #728078;
+  box-shadow: 0 0 1rem currentcolor;
+}
+
+.signal-state--signal,
+.signal-state--signal .signal-dot {
+  color: #72eeaa;
+  background-color: #72eeaa;
+}
+
+.signal-state--noise,
+.signal-state--quiet,
+.signal-state--error {
+  color: #ffc27c;
+}
+
+.signal-state--noise .signal-dot,
+.signal-state--quiet .signal-dot,
+.signal-state--error .signal-dot {
+  background: #ffc27c;
+}
+
+.countdown {
+  display: grid;
+  gap: 0.3rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem) 1.25rem;
+}
+
+.countdown span {
+  color: #82e6af;
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.countdown strong {
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(2.25rem, 8vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.telemetry {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  margin: 0;
+  border-top: 1px solid #213a30;
+}
+
+.telemetry div {
+  min-width: 0;
+  padding: 1rem 1.25rem;
+  border-right: 1px solid #213a30;
+}
+
+.diagnostic {
+  margin: 0;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid #213a30;
+  color: #a9bdb1;
+}
+
+.diagnostic code {
+  color: #ffc27c;
+}
+
 .environment {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  margin: 2.5rem 0 5rem;
+  margin: 1rem 0 5rem;
 }
 
 .environment div {

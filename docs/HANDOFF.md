@@ -34,9 +34,15 @@ or browser URLs. Apply the same rule to passwords and bearer tokens.
 - `src/api/polling.ts`: minimum poll interval ownership.
 - `src/ether/verifier.ts`: key/envelope/frame trust boundary.
 - `src/ether/state.ts`: monotonic accepted-frame state.
+- `src/ether/controller.ts`: sole owner of ether key cache, polling lifecycle,
+  retry state, and published snapshots.
+- `src/ether/time.ts`: signed server-clock offset and countdown calculations.
+- `src/app/runtime.ts`: one transport/controller composition root.
+- `src/app/useEther.ts`: React subscription with ref-counted lifecycle.
 
 ## Next recommended change
 
-Create an application controller that owns one transport, polling coordinator,
-key cache, and ether state. Add a hook that subscribes React without creating
-new pollers. Then render verified phase, local-time countdown, and diagnostics.
+Implement pure registration input validation next. Normalize a GitHub repository
+URL to an exact private repository root, validate the required invitation and
+credential fields without retaining secrets in diagnostics, and cover edge cases
+before building the form or making a registration request.

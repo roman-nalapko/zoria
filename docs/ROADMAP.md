@@ -23,7 +23,7 @@ tests and the repository quality gate pass.
 - [x] Implement strict frame parsing and monotonic `at` reduction.
 - [ ] Test official A–D frames, corrupt JSON, HTML, empty responses, disconnects,
       delayed frames, forged windows, and old echoes.
-- [ ] Implement phase/countdown UI using server-clock offset.
+- [x] Implement phase/countdown UI using server-clock offset.
 
 ## P2 — registration and session
 

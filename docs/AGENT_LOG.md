@@ -35,3 +35,19 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   passed. No secrets were added.
 - Next action: implement the single-owner ether application controller described
   in `HANDOFF.md`.
+
+## 2026-09-22 — live ether controller and receiver UI
+
+- Added the single-owner ether controller, pinned training key cache, verified
+  frame reduction, Retry-After scheduling, failure backoff, and ref-counted
+  lifecycle that prevents duplicate React pollers.
+- Added React composition/subscription, local-time server-offset calculations,
+  trusted phase/countdown telemetry, and non-secret diagnostics.
+- Browser QA found and fixed unbound native `setTimeout` and `fetch` calls that
+  unit tests did not reproduce. The page now renders and reaches the training
+  API; its current `stopping` response is presented as a connection diagnostic.
+- Verification: `npm run check` passed 9 files / 21 tests; `npm run build`
+  passed; local browser render and accessibility tree were inspected.
+- No invitation code, password, token, or private response body was recorded.
+- Next action: implement pure registration/repository input validation, then the
+  consent-aware local draft described in `HANDOFF.md`.

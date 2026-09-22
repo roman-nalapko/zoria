@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { API_ORIGINS, readAppConfig } from './environment'
+import {
+  API_ORIGINS,
+  readAppConfig,
+  TRAINING_ETHER_KEY_FINGERPRINT,
+} from './environment'
 
 describe('readAppConfig', () => {
   it('uses the training stand by default', () => {
     expect(readAppConfig({})).toEqual({
       apiUrl: API_ORIGINS.training,
+      etherKeyFingerprint: TRAINING_ETHER_KEY_FINGERPRINT,
       environment: 'training',
-      productionKeyFingerprint: null,
     })
   })
 

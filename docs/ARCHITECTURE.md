@@ -65,6 +65,12 @@ Timers and requests need explicit owners and cancellation. There must be one
 polling coordinator per API origin, preventing duplicate React mounts from
 multiplying traffic.
 
+The implemented composition root creates one transport and one `EtherController`.
+React consumes immutable controller snapshots through `useSyncExternalStore`;
+subscriber retention starts and stops a single timer, including under development
+StrictMode. Countdown rendering uses the signed frame clock offset and a local
+display-only one-second ticker, never an extra network poll.
+
 ## Ether trust boundary
 
 The verifier accepts raw response text and pinned key metadata and returns one of

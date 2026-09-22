@@ -3,12 +3,15 @@ export const API_ORIGINS = {
   production: 'https://zoria.net/api/v1',
 } as const
 
+export const TRAINING_ETHER_KEY_FINGERPRINT =
+  'f3a436df65614f08635f18fe0f64f145285203f1faa2905ecb25ffb90969a7de'
+
 export type ZoriaEnvironment = keyof typeof API_ORIGINS
 
 export interface AppConfig {
   apiUrl: string
+  etherKeyFingerprint: string
   environment: ZoriaEnvironment
-  productionKeyFingerprint: string | null
 }
 
 export interface EnvironmentInput {
@@ -73,7 +76,10 @@ export function readAppConfig(
 
   return Object.freeze({
     apiUrl,
+    etherKeyFingerprint:
+      environment === 'training'
+        ? TRAINING_ETHER_KEY_FINGERPRINT
+        : configuredFingerprint,
     environment,
-    productionKeyFingerprint: configuredFingerprint || null,
   })
 }

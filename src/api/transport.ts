@@ -41,7 +41,8 @@ export class ApiTransport {
 
   constructor(baseUrl: string, options: TransportOptions = {}) {
     this.#baseUrl = baseUrl.replace(/\/$/, '')
-    this.#fetch = options.fetch ?? fetch
+    this.#fetch =
+      options.fetch ?? ((input, init) => globalThis.fetch(input, init))
     this.#now = options.now ?? Date.now
     this.#quiet = options.quietPeriod ?? new OriginQuietPeriod()
     this.#timeoutMs = options.timeoutMs ?? 10_000

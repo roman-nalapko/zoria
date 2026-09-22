@@ -34,17 +34,22 @@ after every meaningful implementation session.
 - Poll frequency coordinator.
 - Ether key fingerprint verification, Ed25519 envelope verification, strict
   frame parsing, and monotonic frame reduction.
+- Single-owner ether controller with key caching, minimum polling intervals,
+  Retry-After quiet periods, failure backoff, and ref-counted React lifecycle.
+- Live receiver screen with trusted phase, server-adjusted countdown, local
+  time zone, signal diagnostics, and pinned-key visibility.
 - Unit tests for configuration, transport timing, retry behavior, polling, and
-  official signed/forged/corrupt control frames.
+  official signed/forged/corrupt control frames. Current suite: 21 tests.
 
 ## Immediate next work
 
-1. Wire transport and ether verifier into a single application controller.
-2. Fetch `/ether/key`, pin the canonical fingerprint when the site publishes it,
-   and expose trust diagnostics.
-3. Build phase/countdown UI and start `/ether` polling at 15-second minimum.
-4. Implement registration field/repository validation and local-only draft.
-5. Add login-first recovery for an uncertain registration response.
+1. Implement registration field/repository validation and a local-only draft
+   with explicit persistence consent.
+2. Implement registration and `authentication-busy` handling without logging
+   invitation codes, passwords, tokens, or private response bodies.
+3. Add login-first recovery for an uncertain registration response.
+4. Add route shell, error boundary, navigation, and accessible status region.
+5. Expand malformed-response and official-frame coverage from A–C to A–D.
 
 ## External blockers
 
