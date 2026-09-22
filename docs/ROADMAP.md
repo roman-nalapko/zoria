@@ -54,8 +54,9 @@ tests and the repository quality gate pass.
 - [ ] Run the complete `docs/TEST_PLAN.md` matrix on the training stand.
 - [ ] Complete responsive, keyboard, screen-reader, and reduced-motion passes.
 - [ ] Run secret scanning and inspect built assets/source maps for credentials.
-- [ ] Add actual `.zoria` only after the user confirms the final network username.
-- [ ] Invite the account returned by live `/public/config`.
+- [x] Add `.zoria` with the confirmed network username `roman-nalapko`.
+- [x] Invite `zoria-net-bot` with the required Write permission (invitation sent
+      2026-09-22; bot acceptance is asynchronous).
 - [ ] Confirm `accessStatus: verified` well before the deadline.
 
 ## Later released stages
