@@ -1,0 +1,5 @@
+dist
+coverage
+node_modules
+src/api/schema.d.ts
+docs/api/part1.openapi.yaml
