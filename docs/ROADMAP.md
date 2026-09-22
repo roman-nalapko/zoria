@@ -27,7 +27,8 @@ tests and the repository quality gate pass.
 
 ## P2 — registration and session
 
-- [ ] Normalize and validate GitHub repository roots and all registration fields.
+- [ ] Normalize and validate private GitHub repository roots, the one-time
+      `invitation`, and all other registration fields.
 - [ ] Build registration draft with explicit local-storage consent and warning
       that display name is public.
 - [ ] Implement registration, including `authentication-busy` retry behavior.

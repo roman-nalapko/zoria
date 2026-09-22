@@ -30,15 +30,19 @@ same gate runs in GitHub Actions.
 
 Before the admission deadline:
 
-1. Register during the randomly opened window.
-2. Invite the account returned by `GET /public/config` (currently
+1. Obtain the one-time application code delivered by the organizers via the
+   email or Telegram account used in the application.
+2. Register during the randomly opened window using that code and this private
+   repository.
+3. Invite the account returned by `GET /public/config` (currently
    `zoria-net-bot`).
-3. Create `.zoria` in the default branch with the network username on its first
+4. Create `.zoria` in the default branch with the network username on its first
    non-empty line. `.zoria.example` is only a placeholder and does not satisfy
    admission.
-4. Wait until `GET /me/repository` reports `accessStatus: "verified"`.
+5. Wait until `GET /me/repository` reports `accessStatus: "verified"`.
 
-Do not add `.zoria` until the final network username is known.
+The repository must remain private during the season. Do not add `.zoria` until
+the final network username is known.
 
 ## Project map
 

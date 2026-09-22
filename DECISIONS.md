@@ -46,6 +46,8 @@ competition analysis. Code location: to be added.
 ## Known limitations
 
 - The current repository is a prepared foundation, not a complete part 1 client.
+- Registration contract revision 1.1.0 requires a one-time application code and
+  any participant-owned private GitHub repository.
 - The production Ed25519 fingerprint was not visible in the canonical task text
   when this foundation was created and must be pinned before production use.
 - Parts 2–4 are intentionally not guessed because they are released through the

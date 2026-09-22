@@ -28,8 +28,11 @@ Strongly recommended before the window:
 
 ## Admission checklist
 
-- [ ] Register with `POST /auth/register` while the window is open.
-- [ ] Use the same eligible repository as the competition application.
+- [ ] Receive the one-time application code (`invitation`) by email or Telegram.
+- [ ] Register with `POST /auth/register` while the window is open, including the
+      one-time code.
+- [ ] Use the participant's own private GitHub repository; it no longer needs to
+      be pre-listed in the application.
 - [ ] Invite the configured organizer account (`zoria-net-bot` at publication).
 - [ ] Put the final network username in `.zoria` on the default branch.
 - [ ] Reach `accessStatus: "verified"` by 2026-10-06 00:00 local site time
@@ -81,6 +84,8 @@ addenda registry before every freeze.
   5xx responses.
 - A lost registration response must be resolved by attempting login first. Only
   retry registration after `401 invalid-credentials`.
+- Registration requires `invitation`; an unknown, used, or expired code returns
+  `422 invalid-invitation`.
 - Poll summary cheaply and refresh dependent resources only when its counters or
   timestamps move.
 - Paginated news/inbox reads restart at offset zero if data changes mid-read.

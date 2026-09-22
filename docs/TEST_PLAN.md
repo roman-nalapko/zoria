@@ -28,6 +28,8 @@
 ### Registration and session
 
 - all field boundaries from the specification are tested;
+- missing/unknown/used/expired application codes surface `invalid-invitation`
+  without clearing the registration form;
 - repository variants normalize to a root, while branch/file/query/hash links
   are rejected before sending;
 - lost register response invokes login first and does not create a second account;
