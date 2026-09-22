@@ -1,3 +1,5 @@
+import { readAppConfig } from '../config/environment'
+
 const milestones = [
   ['Connect', 'Verify sealed ether frames and track the server clock.'],
   [
@@ -9,9 +11,7 @@ const milestones = [
 ] as const
 
 export function App() {
-  const apiUrl =
-    import.meta.env.VITE_ZORIA_API_URL ?? 'https://stand.zoria.net/api/v1'
-  const environment = import.meta.env.VITE_ZORIA_ENV ?? 'training'
+  const config = readAppConfig()
 
   return (
     <main>
@@ -25,11 +25,11 @@ export function App() {
         <dl className="environment" aria-label="Current API environment">
           <div>
             <dt>Environment</dt>
-            <dd>{environment}</dd>
+            <dd>{config.environment}</dd>
           </div>
           <div>
             <dt>API</dt>
-            <dd>{apiUrl}</dd>
+            <dd>{config.apiUrl}</dd>
           </div>
         </dl>
       </header>

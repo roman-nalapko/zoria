@@ -33,6 +33,8 @@ changing product behavior.
 5. Run `npm run check` before declaring a task complete.
 6. Update `docs/ROADMAP.md` and `DECISIONS.md` when behavior or architecture
    changes.
+7. Keep `docs/STATUS.md` current and append a dated entry to
+   `docs/AGENT_LOG.md` so another agent can continue without chat history.
 
 ## Definition of done
 

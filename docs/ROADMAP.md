@@ -7,20 +7,20 @@ tests and the repository quality gate pass.
 
 - [x] Capture official part 1 requirements, architecture, test plan, and OpenAPI.
 - [x] Scaffold React + TypeScript, strict checks, tests, formatting, and CI.
-- [ ] Generate TypeScript API types from the pinned OpenAPI contract.
-- [ ] Implement validated environment switching (training by default,
+- [x] Generate TypeScript API types from the pinned OpenAPI contract.
+- [x] Implement validated environment switching (training by default,
       production explicit).
 - [ ] Add route shell, error boundary, accessible navigation, and status region.
 
 ## P1 — safe transport and ether
 
-- [ ] Implement raw-response transport with timeout/abort and `credentials: omit`.
-- [ ] Normalize headers, API errors, arbitrary bodies, and request IDs.
-- [ ] Implement shared `Retry-After` quiet state and full-jitter retry scheduling.
-- [ ] Add a singleton polling coordinator with `/ether` and `/ether/roll` limits.
+- [x] Implement raw-response transport with timeout/abort and `credentials: omit`.
+- [x] Normalize headers, API errors, arbitrary bodies, and request IDs.
+- [x] Implement shared `Retry-After` quiet state and full-jitter retry scheduling.
+- [x] Add a singleton polling coordinator with `/ether` and `/ether/roll` limits.
 - [ ] Pin the published production fingerprint once it appears in canonical docs.
-- [ ] Implement key import/fingerprint verification and Ed25519 envelope checks.
-- [ ] Implement strict frame parsing and monotonic `at` reduction.
+- [x] Implement key import/fingerprint verification and Ed25519 envelope checks.
+- [x] Implement strict frame parsing and monotonic `at` reduction.
 - [ ] Test official A–D frames, corrupt JSON, HTML, empty responses, disconnects,
       delayed frames, forged windows, and old echoes.
 - [ ] Implement phase/countdown UI using server-clock offset.
