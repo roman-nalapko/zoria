@@ -54,7 +54,8 @@ Run in one complete UTC hour:
 1. Observe noise without crashes or 429 responses.
 2. Observe the harbinger from `:20` and verify the countdown.
 3. Detect the verified window at `:30`.
-4. Register using one of `zoria-stand/station-01..20`.
+4. Register with the public training invitation `STAND-2026` and a syntactically
+   valid participant-owned private GitHub repository root.
 5. Confirm invitation/`.zoria` instructions and pending repository status.
 6. Break the token and confirm login recovery.
 7. End at `:50` and confirm the after phase.

@@ -51,3 +51,20 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
 - No invitation code, password, token, or private response body was recorded.
 - Next action: implement pure registration/repository input validation, then the
   consent-aware local draft described in `HANDOFF.md`.
+
+## 2026-09-23 — registration clarification and FAQ review
+
+- Reviewed the official news, FAQ, part 1 task, and OpenAPI after the participant
+  relayed an organizer update.
+- Confirmed that canonical sources define the one-time code only as the
+  `invitation` field of `POST /auth/register`; `.zoria` contains the network
+  username. No official source defines a repository file for the invitation.
+- Kept all real registration secrets local-only and recorded the contradictory,
+  unspecified “file in the repository” sentence as awaiting clarification.
+- Recorded the official instruction to contact organizers if the code has not
+  arrived by 2026-09-23, plus the public training code `STAND-2026` and current
+  own-repository training flow.
+- No invitation code, password, token, or private response body was received or
+  recorded.
+- Next action remains pure registration/repository validation and a
+  consent-aware local draft.

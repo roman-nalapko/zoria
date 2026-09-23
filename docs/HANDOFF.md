@@ -25,6 +25,13 @@ arrives, collect it through a hidden terminal prompt or user-entered local UI.
 Never put it in Git, chat logs, command arguments, screenshots, test fixtures,
 or browser URLs. Apply the same rule to passwords and bearer tokens.
 
+On 2026-09-23 the participant relayed an organizer message saying the code should
+also be kept in an unspecified repository file. The canonical news, FAQ, task,
+and OpenAPI do not define that file; they only define `invitation` in the
+registration request, while `.zoria` is explicitly the network username. Do not
+invent a path or commit the code. Request clarification if that instruction is
+repeated with a concrete file contract.
+
 ## Current code seams
 
 - `src/config/environment.ts`: environment validation.

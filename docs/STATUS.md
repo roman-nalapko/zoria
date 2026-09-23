@@ -1,6 +1,6 @@
 # Current project status
 
-Updated: 2026-09-22 by Codex.
+Updated: 2026-09-23 by Codex.
 
 This is the canonical short handoff. Read it before `AGENT_LOG.md`; update both
 after every meaningful implementation session.
@@ -22,6 +22,13 @@ after every meaningful implementation session.
 - The invitation code has not arrived yet. Organizers said it will be delivered
   through the application channel when useful information begins to pass through
   the ether.
+- Official news now says to contact the organizers through the original
+  application channel if the code has not arrived by 2026-09-23.
+- A separate organizer message says to save the code in an unspecified
+  repository file. No canonical page defines such a file; news, FAQ, task, and
+  OpenAPI only define the `invitation` request field. Do not commit it pending an
+  explicit canonical clarification. `.zoria` continues to contain only the
+  network username.
 - Never commit or paste the invitation code, password, or bearer token.
 
 ## Implemented
@@ -54,5 +61,7 @@ after every meaningful implementation session.
 ## External blockers
 
 - One-time application code from Telegram/email.
+- Clarification of the organizer message about an unspecified repository file,
+  if they truly intend anything beyond the `invitation` request field.
 - Canonical production key fingerprint is still shown as “to be published” in
   the reviewed task text. Production ether must not be trusted without it.

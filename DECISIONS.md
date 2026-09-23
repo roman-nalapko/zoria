@@ -43,6 +43,20 @@ implement them in hooks and components. Cost: more explicit adapters. Benefit:
 mutation-testable logic, future reuse by the bot/HQ, and replayable decisions for
 competition analysis. Code location: to be added.
 
+## Decision 4 — registration secrets remain local-only
+
+Status: accepted, pending any canonical contradictory contract.
+
+Choice: invitation codes, passwords, and bearer tokens enter through local UI
+and are never committed or written to diagnostics. Alternative: follow a
+2026-09-23 organizer message that mentions an unspecified repository file.
+Cost: automatic registration requires a local draft/session mechanism. Benefit:
+the implementation follows the public news, FAQ, task, and OpenAPI, none of which
+defines a repository secret file, and avoids persisting a one-time credential in
+Git history. `.zoria` remains the network username only. Code location:
+`src/auth` (planned); repository guardrails are already in `.gitignore` and
+`AGENTS.md`.
+
 ## Known limitations
 
 - The current repository is a prepared foundation, not a complete part 1 client.
