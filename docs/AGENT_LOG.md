@@ -28,6 +28,8 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
 - GitHub did not create scheduled runs promptly, so replaced cron with a
   continuously running job that checks every ten minutes and dispatches a
   successor before the six-hour Actions limit.
+- Persisted the private Telegram chat ID as an Actions secret and made status
+  delivery failures non-fatal so Telegram cannot stop registration monitoring.
 
 ## 2026-09-21 — foundation
 
