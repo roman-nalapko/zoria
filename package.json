@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:worker": "tsc -p tsconfig.worker.json",
     "preview": "vite preview",
+    "run:watch-once": "npm run build:worker && node dist-worker/worker/once.js",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
@@ -17,7 +19,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "generate:api": "openapi-typescript docs/api/part1.openapi.yaml -o src/api/schema.d.ts",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run build:worker && npm run test",
+    "start:worker": "node dist-worker/worker/main.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

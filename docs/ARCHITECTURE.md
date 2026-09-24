@@ -65,6 +65,12 @@ Timers and requests need explicit owners and cancellation. There must be one
 polling coordinator per API origin, preventing duplicate React mounts from
 multiplying traffic.
 
+The implemented composition root creates one transport and one `EtherController`.
+React consumes immutable controller snapshots through `useSyncExternalStore`;
+subscriber retention starts and stops a single timer, including under development
+StrictMode. Countdown rendering uses the signed frame clock offset and a local
+display-only one-second ticker, never an extra network poll.
+
 ## Ether trust boundary
 
 The verifier accepts raw response text and pinned key metadata and returns one of
@@ -79,6 +85,20 @@ input. Its sequence is fixed:
 
 The production fingerprint is configuration, not learned trust. Key rotation
 requires a canonical erratum/news update plus an explicit code/config change.
+
+## Registration watcher deployment
+
+`src/worker` is a Node.js 24 Cloud Run worker for the time-critical registration
+window. It shares the production-key verifier, polls no faster than once every
+15 seconds, and attempts authentication or registration only after a verified
+`phase: "window"` frame. Cloud Run injects the invitation, password, and
+Telegram token from Secret Manager; they are never part of the image or source
+tree. The deployment must use exactly one always-allocated instance.
+
+For a short-lived, zero-budget fallback, `.github/workflows/zoria-watch.yml`
+runs a single trusted-frame check every five minutes. After confirmed
+registration and a delivered Telegram message, it disables itself. Scheduled
+workflows must live on the repository's default branch.
 
 ## UI routes
 

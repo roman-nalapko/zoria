@@ -1,6 +1,6 @@
 # Zoria 2026: implementation brief
 
-Last reviewed: 2026-09-21. Canonical sources are the links in `README.md`; the
+Last reviewed: 2026-09-23. Canonical sources are the links in `README.md`; the
 official OpenAPI contract wins when a field or status code differs from prose.
 
 ## What we are building now
@@ -28,7 +28,7 @@ Strongly recommended before the window:
 
 ## Admission checklist
 
-- [ ] Receive the one-time application code (`invitation`) by email or Telegram.
+- [x] Receive the one-time application code (`invitation`) by email or Telegram.
 - [ ] Register with `POST /auth/register` while the window is open, including the
       one-time code.
 - [ ] Use the participant's own private GitHub repository; it no longer needs to
@@ -39,6 +39,16 @@ Strongly recommended before the window:
       (2026-10-05 21:00 UTC for Europe/Bucharest while UTC+3).
 - [ ] Keep repository access and `.zoria` unchanged through the competition.
 - [ ] Keep a lockfile, documented commands, and no secrets in Git history.
+
+The 2026-09-22 news item says to contact the organizers through the original
+application channel if the invitation code has not arrived by 2026-09-23. The
+official [news](https://zoria.net/news/), [FAQ](https://zoria.net/faq/), task,
+and OpenAPI describe the code only as the `invitation` field sent to
+`POST /auth/register`. They do not define a repository file for it. `.zoria`
+contains the final network username only. A separate organizer message mentioned
+putting the code in “the corresponding file” but named no path or format; treat
+that sentence as unresolved and do not commit the code unless a canonical
+clarification explicitly defines the file and its security model.
 
 Missing the registration window or repository verification deadline eliminates
 the participant. Part 1 itself awards no points.
@@ -76,9 +86,9 @@ addenda registry before every freeze.
 - Verify the signature over the exact received `frame` string, then parse it.
 - Never roll state back from a frame whose `at` is older than the newest accepted
   frame.
-- The published production-key fingerprint was not yet visible in the reviewed
-  task text. Do not trust a production key until the canonical fingerprint is
-  published and configured.
+- The canonical production-key fingerprint is
+  `dcb3155eb8f2538d466a294315e984fa9f67f703556c5e276d5b3afc88895696`,
+  published in the part 1 task and pinned in code.
 - `429` is never noise. Honor `Retry-After`; `jammed` silences all traffic to the
   origin. Use full-jitter exponential backoff for transport errors and unsealed
   5xx responses.
@@ -94,9 +104,10 @@ addenda registry before every freeze.
 ## Training stand
 
 Every UTC hour: noise `:00–:30`, harbinger from `:20`, window `:30–:50`, and
-after-window `:50–:00`. Use repositories `zoria-stand/station-01` through
-`station-20`. Accounts reset daily at 03:05 UTC. The stand does not verify GitHub
-access, so repository status remains pending.
+after-window `:50–:00`. The public training invitation is `STAND-2026` and the
+same participant-owned private repository format is accepted. Accounts reset
+daily at 03:05 UTC. The stand does not verify GitHub access, so repository status
+remains pending.
 
 ## Scoring implications for architecture
 
