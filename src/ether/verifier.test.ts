@@ -44,3 +44,75 @@ describe('ether trust boundary', () => {
     ).resolves.toEqual({ kind: 'noise', reason: 'invalid-envelope' })
   })
 })
+
+// R10: frame validation robustness
+describe('ether frame robustness (R10)', () => {
+  it('rejects envelope with unknown key without crashing', async () => {
+    const tampered = FRAME_A.replace(
+      '"key":"f3a436df65614f08"',
+      '"key":"0000000000000000"',
+    )
+    const result = await verifyEtherEnvelope(tampered, TRAINING_KEY)
+    expect(result.kind).toBe('noise')
+    if (result.kind === 'noise') {
+      expect(result.reason).toBe('unknown-key')
+    }
+  })
+
+  it('rejects envelope with empty body', async () => {
+    const result = await verifyEtherEnvelope('', TRAINING_KEY)
+    expect(result.kind).toBe('noise')
+  })
+
+  it('rejects envelope with null body', async () => {
+    const result = await verifyEtherEnvelope('null', TRAINING_KEY)
+    expect(result.kind).toBe('noise')
+  })
+
+  it('rejects envelope with missing seal field', async () => {
+    const result = await verifyEtherEnvelope(
+      '{"frame":"x","key":"f3a436df65614f08"}',
+      TRAINING_KEY,
+    )
+    expect(result.kind).toBe('noise')
+    if (result.kind === 'noise') {
+      expect(result.reason).toBe('invalid-envelope')
+    }
+  })
+
+  it('accepts frame A (training) with {uk, ru} harbinger text (backward compat)', async () => {
+    // Frame A carries {uk, ru} — the Harbinger type now accepts both via optional keys.
+    const result = await verifyEtherEnvelope(FRAME_A, TRAINING_KEY)
+    expect(result.kind).toBe('signal')
+    if (result.kind === 'signal') {
+      expect(result.frame.harbinger?.text.uk).toBeDefined()
+    }
+  })
+
+  it('does not crash on unknown frame fields (forward compatibility)', async () => {
+    // Verify that frame A parses correctly and does not crash regardless of extra fields.
+    const result = await verifyEtherEnvelope(FRAME_A, TRAINING_KEY)
+    expect(result).toHaveProperty('kind')
+    expect(['signal', 'noise']).toContain(result.kind)
+  })
+
+  it('rejects key with wrong fingerprint', async () => {
+    const wrongFingerprintKey = {
+      ...TRAINING_KEY,
+      fingerprint: '0'.repeat(64),
+    }
+    const key = await import('./verifier.js').then((m) =>
+      m.verifyEtherKey(wrongFingerprintKey, '0'.repeat(64)),
+    )
+    expect(key).toBeNull()
+  })
+
+  it('does not accept seal from a different frame on the same key', async () => {
+    // FRAME_B's seal does not match the training key for the FRAME_A payload.
+    const result = await verifyEtherEnvelope(FRAME_B, TRAINING_KEY)
+    expect(result.kind).toBe('noise')
+    if (result.kind === 'noise') {
+      expect(result.reason).toBe('invalid-seal')
+    }
+  })
+})

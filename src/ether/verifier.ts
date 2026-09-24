@@ -18,9 +18,17 @@ export interface EtherWindow {
 
 export interface Harbinger {
   opensIn: number
+  /**
+   * September 24 addendum: production harbinger.text carries {uk, en}.
+   * Training frame A still carries {uk, ru}. All keys are optional so both
+   * are accepted without rejecting unknown fields forward-compatibly.
+   */
   text: {
-    ru: string
-    uk: string
+    uk?: string
+    en?: string
+    /** Legacy training fixture key; absent in production. */
+    ru?: string
+    [key: string]: string | undefined
   }
 }
 

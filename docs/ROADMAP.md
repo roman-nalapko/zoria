@@ -3,6 +3,13 @@
 Checkboxes are the work queue for coding agents. A task is complete only when its
 tests and the repository quality gate pass.
 
+## Urgent override — registration reliability
+
+Complete P0 R1–R6 in [REGISTRATION_BACKLOG.md](REGISTRATION_BACKLOG.md) first.
+The September 24 audit found unattended-registration blockers despite green CI.
+Then address P1 R7–R12 and return to the product work below. Existing checked
+implementation items do not certify worker reliability or successful admission.
+
 ## P0 — foundation
 
 - [x] Capture official part 1 requirements, architecture, test plan, and OpenAPI.

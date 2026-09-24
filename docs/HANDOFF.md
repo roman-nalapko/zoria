@@ -1,5 +1,9 @@
 # AI agent handoff
 
+September 24 handoff: read `docs/REGISTRATION_BACKLOG.md` first. It supersedes
+older readiness claims and next-work recommendations. The audit was recorded;
+its defects have NOT yet been fixed. User is moving to Google Antigravity.
+
 ## Start here
 
 1. Read `AGENTS.md`, `docs/STATUS.md`, and `docs/ROADMAP.md`.
@@ -54,6 +58,8 @@ repeated with a concrete file contract.
 
 ## Next recommended change
 
-Implement a redacted in-memory session vault and lift successful registration
-state into the application controller. Then show the organizer account, `.zoria`
-marker instructions, session expiry, and repository verification next actions.
+Prioritize registration backlog P0 R1–R6, then P1 R7–R12. Verify the current
+GitHub job before changing deployment. Existing Actions secrets should be reused
+without asking the user to paste them into another chat. The user authorized
+automatic registration on a verified window and Telegram status every ten
+minutes, with no paid infrastructure. Never promise guaranteed registration.
