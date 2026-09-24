@@ -26,8 +26,8 @@ async function main(): Promise<void> {
       `📡 Zoria watcher: ${status} Следующая проверка примерно через 10 минут.`,
     )
     if (!delivered) {
-      throw new Error(
-        'Telegram message was not delivered; send /start to the bot',
+      console.error(
+        'Telegram health message was not delivered; monitoring continues',
       )
     }
   }
@@ -68,7 +68,12 @@ async function registerDuringWindow(): Promise<void> {
 
 async function complete(message: string): Promise<void> {
   const delivered = await telegram.send(message)
-  if (!delivered) throw new Error('Registration succeeded but Telegram failed')
+  if (!delivered) {
+    console.error(
+      'Registration succeeded but Telegram failed; will retry notification',
+    )
+    return
+  }
   await disableThisWorkflow()
 }
 
