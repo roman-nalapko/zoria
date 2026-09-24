@@ -7,32 +7,32 @@ tests and the repository quality gate pass.
 
 - [x] Capture official part 1 requirements, architecture, test plan, and OpenAPI.
 - [x] Scaffold React + TypeScript, strict checks, tests, formatting, and CI.
-- [ ] Generate TypeScript API types from the pinned OpenAPI contract.
-- [ ] Implement validated environment switching (training by default,
+- [x] Generate TypeScript API types from the pinned OpenAPI contract.
+- [x] Implement validated environment switching (training by default,
       production explicit).
 - [ ] Add route shell, error boundary, accessible navigation, and status region.
 
 ## P1 — safe transport and ether
 
-- [ ] Implement raw-response transport with timeout/abort and `credentials: omit`.
-- [ ] Normalize headers, API errors, arbitrary bodies, and request IDs.
-- [ ] Implement shared `Retry-After` quiet state and full-jitter retry scheduling.
-- [ ] Add a singleton polling coordinator with `/ether` and `/ether/roll` limits.
-- [ ] Pin the published production fingerprint once it appears in canonical docs.
-- [ ] Implement key import/fingerprint verification and Ed25519 envelope checks.
-- [ ] Implement strict frame parsing and monotonic `at` reduction.
+- [x] Implement raw-response transport with timeout/abort and `credentials: omit`.
+- [x] Normalize headers, API errors, arbitrary bodies, and request IDs.
+- [x] Implement shared `Retry-After` quiet state and full-jitter retry scheduling.
+- [x] Add a singleton polling coordinator with `/ether` and `/ether/roll` limits.
+- [x] Pin the published production fingerprint once it appears in canonical docs.
+- [x] Implement key import/fingerprint verification and Ed25519 envelope checks.
+- [x] Implement strict frame parsing and monotonic `at` reduction.
 - [ ] Test official A–D frames, corrupt JSON, HTML, empty responses, disconnects,
       delayed frames, forged windows, and old echoes.
-- [ ] Implement phase/countdown UI using server-clock offset.
+- [x] Implement phase/countdown UI using server-clock offset.
 
 ## P2 — registration and session
 
-- [ ] Normalize and validate private GitHub repository roots, the one-time
+- [x] Normalize and validate private GitHub repository roots, the one-time
       `invitation`, and all other registration fields.
-- [ ] Build registration draft with explicit local-storage consent and warning
+- [x] Build registration draft with explicit local-storage consent and warning
       that display name is public.
-- [ ] Implement registration, including `authentication-busy` retry behavior.
-- [ ] Implement lost-registration-response recovery via login-first state machine.
+- [x] Implement registration, including `authentication-busy` retry behavior.
+- [x] Implement lost-registration-response recovery via login-first state machine.
 - [ ] Implement login/logout, expiry warning, redacted session vault, and screen
       restoration after `401`.
 - [ ] Show organizer invitation and `.zoria` instructions immediately on success.
@@ -57,6 +57,10 @@ tests and the repository quality gate pass.
 - [x] Add `.zoria` with the confirmed network username `roman-nalapko`.
 - [x] Invite `zoria-net-bot` with the required Write permission (invitation sent
       2026-09-22; bot acceptance is asynchronous).
+- [x] Add a single-instance Cloud Run watcher for signed-window registration and
+      Telegram alerts; production deployment remains an operator step.
+- [x] Add a temporary zero-budget GitHub Actions watcher that disables itself
+      after confirmed registration and Telegram delivery.
 - [ ] Confirm `accessStatus: verified` well before the deadline.
 
 ## Later released stages

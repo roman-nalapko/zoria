@@ -54,8 +54,9 @@ the final network username is known.
 - `docs/api/part1.openapi.yaml` — official OpenAPI 3.1 contract.
 - `DECISIONS.md` — competition-required engineering record.
 
-Primary sources: [part 1 task](https://zoria.net/part1/tz/),
-[client specification](https://zoria.net/part1/client/),
-[OpenAPI](https://zoria.net/part1/openapi/),
+Primary sources: [part 1 task](https://zoria.net/spec/part1/tz/),
+[client specification](https://zoria.net/spec/client/),
+[OpenAPI](https://zoria.net/spec/openapi/),
+[FAQ](https://zoria.net/faq/),
 [scoring](https://zoria.net/scoring/), and
 [calendar](https://zoria.net/calendar/).
