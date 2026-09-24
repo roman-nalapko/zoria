@@ -28,7 +28,7 @@ Strongly recommended before the window:
 
 ## Admission checklist
 
-- [ ] Receive the one-time application code (`invitation`) by email or Telegram.
+- [x] Receive the one-time application code (`invitation`) by email or Telegram.
 - [ ] Register with `POST /auth/register` while the window is open, including the
       one-time code.
 - [ ] Use the participant's own private GitHub repository; it no longer needs to
@@ -86,9 +86,9 @@ addenda registry before every freeze.
 - Verify the signature over the exact received `frame` string, then parse it.
 - Never roll state back from a frame whose `at` is older than the newest accepted
   frame.
-- The published production-key fingerprint was not yet visible in the reviewed
-  task text. Do not trust a production key until the canonical fingerprint is
-  published and configured.
+- The canonical production-key fingerprint is
+  `dcb3155eb8f2538d466a294315e984fa9f67f703556c5e276d5b3afc88895696`,
+  published in the part 1 task and pinned in code.
 - `429` is never noise. Honor `Retry-After`; `jammed` silences all traffic to the
   origin. Use full-jitter exponential backoff for transport errors and unsealed
   5xx responses.

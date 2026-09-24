@@ -18,7 +18,7 @@ tests and the repository quality gate pass.
 - [x] Normalize headers, API errors, arbitrary bodies, and request IDs.
 - [x] Implement shared `Retry-After` quiet state and full-jitter retry scheduling.
 - [x] Add a singleton polling coordinator with `/ether` and `/ether/roll` limits.
-- [ ] Pin the published production fingerprint once it appears in canonical docs.
+- [x] Pin the published production fingerprint once it appears in canonical docs.
 - [x] Implement key import/fingerprint verification and Ed25519 envelope checks.
 - [x] Implement strict frame parsing and monotonic `at` reduction.
 - [ ] Test official A–D frames, corrupt JSON, HTML, empty responses, disconnects,
@@ -27,12 +27,12 @@ tests and the repository quality gate pass.
 
 ## P2 — registration and session
 
-- [ ] Normalize and validate private GitHub repository roots, the one-time
+- [x] Normalize and validate private GitHub repository roots, the one-time
       `invitation`, and all other registration fields.
-- [ ] Build registration draft with explicit local-storage consent and warning
+- [x] Build registration draft with explicit local-storage consent and warning
       that display name is public.
-- [ ] Implement registration, including `authentication-busy` retry behavior.
-- [ ] Implement lost-registration-response recovery via login-first state machine.
+- [x] Implement registration, including `authentication-busy` retry behavior.
+- [x] Implement lost-registration-response recovery via login-first state machine.
 - [ ] Implement login/logout, expiry warning, redacted session vault, and screen
       restoration after `401`.
 - [ ] Show organizer invitation and `.zoria` instructions immediately on success.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { AppConfig } from '../config/environment'
 import type { EtherController, EtherSnapshot } from '../ether/controller'
 import {
@@ -6,7 +6,8 @@ import {
   formatCountdown,
   formatLocalTime,
 } from '../ether/time'
-import { appConfig, etherController } from './runtime'
+import { RegistrationPanel } from './RegistrationPanel'
+import { apiTransport, appConfig, etherController } from './runtime'
 import { useEther } from './useEther'
 
 const milestones = [
@@ -45,10 +46,16 @@ function useClock(enabled: boolean): number {
 export interface AppViewProps {
   config: AppConfig
   nowMs: number
+  registration?: ReactNode
   snapshot: EtherSnapshot
 }
 
-export function AppView({ config, nowMs, snapshot }: AppViewProps) {
+export function AppView({
+  config,
+  nowMs,
+  registration,
+  snapshot,
+}: AppViewProps) {
   const frame = snapshot.frame
   const timing =
     frame && snapshot.receivedAt !== null
@@ -131,6 +138,8 @@ export function AppView({ config, nowMs, snapshot }: AppViewProps) {
         </dl>
       </header>
 
+      {registration}
+
       <section aria-labelledby="mission-title">
         <h2 id="mission-title">Mission sequence</h2>
         <ol className="milestones">
@@ -157,5 +166,14 @@ export function App({
 }: AppProps) {
   const snapshot = useEther(controller)
   const nowMs = useClock(snapshot.frame !== null)
-  return <AppView config={config} nowMs={nowMs} snapshot={snapshot} />
+  return (
+    <AppView
+      config={config}
+      nowMs={nowMs}
+      snapshot={snapshot}
+      registration={
+        <RegistrationPanel snapshot={snapshot} transport={apiTransport} />
+      }
+    />
+  )
 }
