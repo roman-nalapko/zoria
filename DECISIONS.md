@@ -14,6 +14,18 @@ known limitations. Do not fabricate line references; update them at final freeze
 | `src/auth`       | Registration and session lifecycle                               |
 | `src/repository` | Repository normalization and admission status                    |
 | `src/content`    | News, inbox, task stages, and safe rendering                     |
+| `src/worker`     | Cloud Run registration watcher and Telegram alerts               |
+
+## Decision 0 — one always-allocated registration watcher
+
+Status: accepted.
+
+Choice: run a single Node.js Cloud Run instance that shares the pinned Ed25519
+verifier and acts only on a verified window. Alternative: keep a browser tab
+open or use a one-minute scheduled job. Cost: a small always-on Cloud Run charge
+and one more deployable. Benefit: reliable 15-second monitoring independent of a
+personal computer. Secrets are injected from Secret Manager and excluded from
+the image and logs. Code location: `src/worker` and `Dockerfile`.
 
 ## Decision 1 — raw response at the trust boundary
 

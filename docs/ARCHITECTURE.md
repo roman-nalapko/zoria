@@ -86,6 +86,15 @@ input. Its sequence is fixed:
 The production fingerprint is configuration, not learned trust. Key rotation
 requires a canonical erratum/news update plus an explicit code/config change.
 
+## Registration watcher deployment
+
+`src/worker` is a Node.js 24 Cloud Run worker for the time-critical registration
+window. It shares the production-key verifier, polls no faster than once every
+15 seconds, and attempts authentication or registration only after a verified
+`phase: "window"` frame. Cloud Run injects the invitation, password, and
+Telegram token from Secret Manager; they are never part of the image or source
+tree. The deployment must use exactly one always-allocated instance.
+
 ## UI routes
 
 - `/` — connection status, phase, countdown, and next required action.
