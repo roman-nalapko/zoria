@@ -1,0 +1,36 @@
+name: Zoria window watcher
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: zoria-window-watcher
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      NOTIFY_HEALTH: ${{ github.event_name == 'workflow_dispatch' }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      ZORIA_DISPLAY_NAME: Zoria
+      ZORIA_INVITATION: ${{ secrets.ZORIA_INVITATION }}
+      ZORIA_PASSWORD: ${{ secrets.ZORIA_PASSWORD }}
+      ZORIA_REPOSITORY_URL: https://github.com/roman-nalapko/zoria
+      ZORIA_USERNAME: roman-nalapko
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run run:watch-once
