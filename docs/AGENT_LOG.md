@@ -22,6 +22,9 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   avoid consuming further Actions minutes.
 - The workflow requires three GitHub Actions secrets and must be merged to the
   default branch before schedules run.
+- Updated the active schedule to ten minutes with a Telegram status message on
+  every check, while preserving the immediate success notification and
+  self-disable behavior.
 
 ## 2026-09-21 — foundation
 
