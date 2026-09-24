@@ -15,8 +15,9 @@ after every meaningful implementation session.
 - CI: formatting, ESLint, strict TypeScript, Vitest, and production build.
 - A single-instance Cloud Run watcher is ready for deployment. It requires
   Secret Manager values and a private Telegram chat started with the bot.
-- Because the linked Cloud Billing account is closed, a temporary ten-minute
-  GitHub Actions watcher is the active zero-budget deployment path.
+- Because the linked Cloud Billing account is closed, a continuous GitHub
+  Actions job is the active zero-budget deployment path. It checks every ten
+  minutes and chains a successor before the six-hour job limit.
 
 ## Official contract
 

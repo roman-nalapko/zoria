@@ -25,6 +25,9 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
 - Updated the active schedule to ten minutes with a Telegram status message on
   every check, while preserving the immediate success notification and
   self-disable behavior.
+- GitHub did not create scheduled runs promptly, so replaced cron with a
+  continuously running job that checks every ten minutes and dispatches a
+  successor before the six-hour Actions limit.
 
 ## 2026-09-21 — foundation
 

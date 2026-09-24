@@ -95,11 +95,11 @@ window. It shares the production-key verifier, polls no faster than once every
 Telegram token from Secret Manager; they are never part of the image or source
 tree. The deployment must use exactly one always-allocated instance.
 
-For a short-lived, zero-budget fallback, `.github/workflows/zoria-watch.yml`
-runs a single trusted-frame check every ten minutes and reports each check to
-Telegram. After confirmed registration and a delivered success message, it
-disables itself. Scheduled workflows must live on the repository's default
-branch.
+For a short-lived, zero-budget fallback,
+`.github/workflows/zoria-watch-live.yml` runs continuously for about five hours
+and forty minutes, checking once every ten minutes, then dispatches its successor
+before exiting. This avoids GitHub cron latency. After confirmed registration
+and a delivered success message, it disables both watcher workflows.
 
 ## UI routes
 

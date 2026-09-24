@@ -1,9 +1,6 @@
 name: Zoria window watcher
 
-on:
-  schedule:
-    - cron: '*/10 * * * *'
-  workflow_dispatch:
+on: workflow_dispatch
 
 permissions:
   actions: write
