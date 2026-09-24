@@ -19,5 +19,6 @@
     "exactOptionalPropertyTypes": true,
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/worker"]
 }

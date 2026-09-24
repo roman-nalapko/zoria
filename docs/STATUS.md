@@ -1,6 +1,6 @@
 # Current project status
 
-Updated: 2026-09-23 by Codex.
+Updated: 2026-09-24 by Codex.
 
 This is the canonical short handoff. Read it before `AGENT_LOG.md`; update both
 after every meaningful implementation session.
@@ -13,6 +13,8 @@ after every meaningful implementation session.
 - `.zoria`: `roman-nalapko`, present on both branches.
 - `zoria-net-bot`: Write invitation sent on 2026-09-22; acceptance is pending.
 - CI: formatting, ESLint, strict TypeScript, Vitest, and production build.
+- A single-instance Cloud Run watcher is ready for deployment. It requires
+  Secret Manager values and a private Telegram chat started with the bot.
 
 ## Official contract
 

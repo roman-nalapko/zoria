@@ -57,6 +57,8 @@ tests and the repository quality gate pass.
 - [x] Add `.zoria` with the confirmed network username `roman-nalapko`.
 - [x] Invite `zoria-net-bot` with the required Write permission (invitation sent
       2026-09-22; bot acceptance is asynchronous).
+- [x] Add a single-instance Cloud Run watcher for signed-window registration and
+      Telegram alerts; production deployment remains an operator step.
 - [ ] Confirm `accessStatus: verified` well before the deadline.
 
 ## Later released stages

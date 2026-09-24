@@ -4,6 +4,16 @@ Append new entries; do not rewrite history. Include decisions, changed files,
 verification commands, remaining risks, and the exact next action. Never record
 secrets, tokens, invitation codes, passwords, or private response bodies.
 
+## 2026-09-24 — Cloud registration watcher
+
+- Added a Node.js 24 worker and container for one always-on Cloud Run instance.
+- The worker verifies the pinned production Ed25519 envelope before acting,
+  respects the 15-second poll floor and `Retry-After`, performs a login-first
+  idempotency check, and sends Telegram alerts without logging secrets.
+- Secrets are environment-only and intended for Google Secret Manager.
+- Next action: deploy to the selected Google Cloud project with one minimum and
+  maximum instance and CPU throttling disabled.
+
 ## 2026-09-21 — foundation
 
 - Reviewed part 1 task, client specification, OpenAPI, scoring, calendar, and
