@@ -68,3 +68,25 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   recorded.
 - Next action remains pure registration/repository validation and a
   consent-aware local draft.
+
+## 2026-09-24 — production trust pin and guarded registration
+
+- Pinned the canonically published production Ed25519 fingerprint and removed
+  the need for an operator-supplied trust override.
+- Added exact GitHub repository-root normalization and validation for every
+  registration field without echoing secret values in errors.
+- Added an explicit-consent browser draft that can persist username, display
+  name, repository, and language, but structurally cannot persist the invitation
+  or password.
+- Added registration with a verified-window gate, bounded
+  `authentication-busy` Retry-After retries, strict session parsing, and
+  login-first recovery after a lost/uncertain response.
+- Added the production registration form. The invitation and password stay only
+  in component memory and are cleared after success.
+- Verification: `npm run check` passed 12 files / 27 tests; `npm run build`
+  passed; production browser QA confirmed the canonical trust pin, verified
+  static ether frame, empty secret fields, and disabled submission gate.
+- The real invitation value was not written to source, tests, docs, storage, or
+  command output.
+- Next action: add the in-memory session vault and repository next-step screen,
+  then register only after a verified production `window` frame.

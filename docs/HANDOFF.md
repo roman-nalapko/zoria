@@ -46,10 +46,14 @@ repeated with a concrete file contract.
 - `src/ether/time.ts`: signed server-clock offset and countdown calculations.
 - `src/app/runtime.ts`: one transport/controller composition root.
 - `src/app/useEther.ts`: React subscription with ref-counted lifecycle.
+- `src/auth/validation.ts`: secret-safe field checks and GitHub root
+  normalization.
+- `src/auth/draft.ts`: explicit-consent persistence of non-secret fields only.
+- `src/auth/registration.ts`: window gate, busy retry, and login-first recovery.
+- `src/app/RegistrationPanel.tsx`: local secret-entry and submission UI.
 
 ## Next recommended change
 
-Implement pure registration input validation next. Normalize a GitHub repository
-URL to an exact private repository root, validate the required invitation and
-credential fields without retaining secrets in diagnostics, and cover edge cases
-before building the form or making a registration request.
+Implement a redacted in-memory session vault and lift successful registration
+state into the application controller. Then show the organizer account, `.zoria`
+marker instructions, session expiry, and repository verification next actions.

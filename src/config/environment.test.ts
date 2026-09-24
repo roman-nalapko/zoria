@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   API_ORIGINS,
+  PRODUCTION_ETHER_KEY_FINGERPRINT,
   readAppConfig,
   TRAINING_ETHER_KEY_FINGERPRINT,
 } from './environment'
@@ -14,10 +15,12 @@ describe('readAppConfig', () => {
     })
   })
 
-  it('requires a pinned fingerprint in production', () => {
-    expect(() => readAppConfig({ VITE_ZORIA_ENV: 'production' })).toThrow(
-      /pinned ether key fingerprint/i,
-    )
+  it('uses the canonically published fingerprint in production', () => {
+    expect(readAppConfig({ VITE_ZORIA_ENV: 'production' })).toEqual({
+      apiUrl: API_ORIGINS.production,
+      etherKeyFingerprint: PRODUCTION_ETHER_KEY_FINGERPRINT,
+      environment: 'production',
+    })
   })
 
   it('rejects an origin that does not match the selected environment', () => {

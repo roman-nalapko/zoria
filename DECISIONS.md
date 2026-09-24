@@ -54,8 +54,9 @@ Cost: automatic registration requires a local draft/session mechanism. Benefit:
 the implementation follows the public news, FAQ, task, and OpenAPI, none of which
 defines a repository secret file, and avoids persisting a one-time credential in
 Git history. `.zoria` remains the network username only. Code location:
-`src/auth` (planned); repository guardrails are already in `.gitignore` and
-`AGENTS.md`.
+`src/auth/validation.ts`, `src/auth/draft.ts`, `src/auth/registration.ts`, and
+`src/app/RegistrationPanel.tsx`; repository guardrails are also in `.gitignore`
+and `AGENTS.md`.
 
 ## Known limitations
 

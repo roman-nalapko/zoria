@@ -17,11 +17,11 @@ after every meaningful implementation session.
 ## Official contract
 
 - OpenAPI 3.1 revision: 1.1.0, published 2026-09-22.
+- Production Ed25519 fingerprint was published and pinned on 2026-09-23.
 - Registration now requires one-time `invitation` and any participant-owned
   private GitHub repository.
-- The invitation code has not arrived yet. Organizers said it will be delivered
-  through the application channel when useful information begins to pass through
-  the ether.
+- The invitation code arrived on 2026-09-24. Its value is deliberately absent
+  from the repository and documentation; enter it only in the local form.
 - Official news now says to contact the organizers through the original
   application channel if the code has not arrived by 2026-09-23.
 - A separate organizer message says to save the code in an unspecified
@@ -45,23 +45,26 @@ after every meaningful implementation session.
   Retry-After quiet periods, failure backoff, and ref-counted React lifecycle.
 - Live receiver screen with trusted phase, server-adjusted countdown, local
   time zone, signal diagnostics, and pinned-key visibility.
+- Registration validation, exact GitHub repository-root normalization, and a
+  consent-aware draft that persists only non-secret fields.
+- Window-gated registration with `authentication-busy` Retry-After handling and
+  login-first recovery after an uncertain response.
 - Unit tests for configuration, transport timing, retry behavior, polling, and
-  official signed/forged/corrupt control frames. Current suite: 21 tests.
+  official signed/forged/corrupt control frames. Current suite: 27 tests.
 
 ## Immediate next work
 
-1. Implement registration field/repository validation and a local-only draft
-   with explicit persistence consent.
-2. Implement registration and `authentication-busy` handling without logging
-   invitation codes, passwords, tokens, or private response bodies.
-3. Add login-first recovery for an uncertain registration response.
+1. Keep the production client running; enter the invitation and a password only
+   in the local form, then submit after a verified `phase: window` frame.
+2. Add the redacted in-memory session vault and authenticated screen state.
+3. Show repository invitation/marker instructions immediately after success.
 4. Add route shell, error boundary, navigation, and accessible status region.
 5. Expand malformed-response and official-frame coverage from A–C to A–D.
 
 ## External blockers
 
-- One-time application code from Telegram/email.
 - Clarification of the organizer message about an unspecified repository file,
   if they truly intend anything beyond the `invitation` request field.
+- The registration window has not yet appeared in a verified ether frame.
 - Canonical production key fingerprint is still shown as “to be published” in
   the reviewed task text. Production ether must not be trusted without it.

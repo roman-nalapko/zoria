@@ -5,6 +5,8 @@ export const API_ORIGINS = {
 
 export const TRAINING_ETHER_KEY_FINGERPRINT =
   'f3a436df65614f08635f18fe0f64f145285203f1faa2905ecb25ffb90969a7de'
+export const PRODUCTION_ETHER_KEY_FINGERPRINT =
+  'dcb3155eb8f2538d466a294315e984fa9f67f703556c5e276d5b3afc88895696'
 
 export type ZoriaEnvironment = keyof typeof API_ORIGINS
 
@@ -17,10 +19,7 @@ export interface AppConfig {
 export interface EnvironmentInput {
   VITE_ZORIA_API_URL?: string
   VITE_ZORIA_ENV?: string
-  VITE_ZORIA_PRODUCTION_KEY_FINGERPRINT?: string
 }
-
-const FINGERPRINT_PATTERN = /^[a-f0-9]{64}$/
 
 function normalizeApiUrl(value: string): string {
   const url = new URL(value)
@@ -58,28 +57,12 @@ export function readAppConfig(
     )
   }
 
-  const configuredFingerprint =
-    env.VITE_ZORIA_PRODUCTION_KEY_FINGERPRINT?.trim().toLowerCase() ?? ''
-
-  if (
-    configuredFingerprint !== '' &&
-    !FINGERPRINT_PATTERN.test(configuredFingerprint)
-  ) {
-    throw new Error(
-      'Production key fingerprint must be 64 lowercase hex digits',
-    )
-  }
-
-  if (environment === 'production' && configuredFingerprint === '') {
-    throw new Error('Production requires a pinned ether key fingerprint')
-  }
-
   return Object.freeze({
     apiUrl,
     etherKeyFingerprint:
       environment === 'training'
         ? TRAINING_ETHER_KEY_FINGERPRINT
-        : configuredFingerprint,
+        : PRODUCTION_ETHER_KEY_FINGERPRINT,
     environment,
   })
 }
