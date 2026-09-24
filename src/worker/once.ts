@@ -13,10 +13,17 @@ const zoria = new ZoriaWorkerClient(config)
 async function main(): Promise<void> {
   const frame = await zoria.pollTrustedFrame()
 
+  if (frame?.phase === 'window') {
+    await registerDuringWindow()
+    return
+  }
+
   if (process.env.NOTIFY_HEALTH === 'true') {
-    const phase = frame ? ` Подтверждённая фаза: ${frame.phase}.` : ''
+    const status = frame
+      ? `Подтверждённая фаза: ${frame.phase}. Просвет ещё не открыт.`
+      : 'Подписанный кадр в этой проверке не получен; шум безопасно отброшен.'
     const delivered = await telegram.send(
-      `🤖 Zoria watcher в GitHub Actions запущен.${phase} Проверка будет выполняться каждые 5 минут.`,
+      `📡 Zoria watcher: ${status} Следующая проверка примерно через 10 минут.`,
     )
     if (!delivered) {
       throw new Error(
@@ -24,9 +31,9 @@ async function main(): Promise<void> {
       )
     }
   }
+}
 
-  if (frame?.phase !== 'window') return
-
+async function registerDuringWindow(): Promise<void> {
   const login = await retryAuthenticationBusy(() => zoria.login())
   if (login.ok) {
     await complete(

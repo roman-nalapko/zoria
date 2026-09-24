@@ -96,9 +96,10 @@ Telegram token from Secret Manager; they are never part of the image or source
 tree. The deployment must use exactly one always-allocated instance.
 
 For a short-lived, zero-budget fallback, `.github/workflows/zoria-watch.yml`
-runs a single trusted-frame check every five minutes. After confirmed
-registration and a delivered Telegram message, it disables itself. Scheduled
-workflows must live on the repository's default branch.
+runs a single trusted-frame check every ten minutes and reports each check to
+Telegram. After confirmed registration and a delivered success message, it
+disables itself. Scheduled workflows must live on the repository's default
+branch.
 
 ## UI routes
 
