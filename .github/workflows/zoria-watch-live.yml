@@ -1,5 +1,16 @@
 name: Zoria live watcher
 
+# Continuously monitors the Zoria ether channel and registers when the window
+# opens. Each job runs for up to ~355 minutes (6 hours minus setup buffer),
+# then dispatches a successor before exiting.
+#
+# BUDGET NOTE (R6): GitHub Actions free tier for private repos is 2,000
+# minutes/month for free accounts. A continuously running job of 355 min
+# uses ~355 min plus setup (~2 min). Each month allows ~5 full runs.
+# Set ZORIA_MAX_CHECKS to limit iterations; each check sleeps 10 minutes.
+# Default: 34 checks × 10 min + setup ≈ 355 minutes per job.
+# Monitor usage at https://github.com/settings/billing
+
 on: workflow_dispatch
 
 permissions:
@@ -22,6 +33,7 @@ jobs:
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       ZORIA_DISPLAY_NAME: Zoria
       ZORIA_INVITATION: ${{ secrets.ZORIA_INVITATION }}
+      ZORIA_MAX_CHECKS: '34'
       ZORIA_PASSWORD: ${{ secrets.ZORIA_PASSWORD }}
       ZORIA_REPOSITORY_URL: https://github.com/roman-nalapko/zoria
       ZORIA_USERNAME: roman-nalapko
@@ -33,16 +45,45 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build:worker
-      - name: Watch every ten minutes
+
+      - name: Watch every ten minutes with reliable successor dispatch (R5)
         run: |
-          for check in $(seq 1 34); do
-            node dist-worker/worker/once.js
-            state=$(gh api repos/${GITHUB_REPOSITORY}/actions/workflows/zoria-watch-live.yml --jq .state)
+          MAX_CHECKS="${ZORIA_MAX_CHECKS:-34}"
+          for check in $(seq 1 "$MAX_CHECKS"); do
+            echo "=== Check $check / $MAX_CHECKS at $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+
+            # Run one ether check; never exits non-zero on transient failure (R1).
+            node dist-worker/worker/once.js || true
+
+            # Check if this workflow has been disabled (e.g. after successful
+            # registration). Exit cleanly if so; do not dispatch a successor.
+            state=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/zoria-watch-live.yml" \
+              --jq '.state' 2>/dev/null || echo "unknown")
             if [ "$state" != "active" ]; then
+              echo "Workflow is $state — exiting without successor dispatch."
               exit 0
             fi
-            if [ "$check" -lt 34 ]; then
+
+            # On the second-to-last check, dispatch successor BEFORE sleeping
+            # to guarantee continuous coverage even if the dispatch itself takes
+            # a few seconds (R5 — overlap, not gap).
+            if [ "$check" -eq $(( MAX_CHECKS - 1 )) ]; then
+              echo "Dispatching successor before final sleep..."
+              gh workflow run zoria-watch-live.yml --ref main \
+                && echo "Successor dispatched successfully." \
+                || echo "WARNING: successor dispatch failed; watcher may lapse."
+            fi
+
+            if [ "$check" -lt "$MAX_CHECKS" ]; then
               sleep 600
             fi
           done
-          gh workflow run zoria-watch-live.yml --ref main
+
+          # Final fallback: if we reach here without dispatching (edge case).
+          state=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/zoria-watch-live.yml" \
+            --jq '.state' 2>/dev/null || echo "unknown")
+          if [ "$state" = "active" ]; then
+            echo "Final fallback dispatch..."
+            gh workflow run zoria-watch-live.yml --ref main \
+              || echo "WARNING: final dispatch failed."
+          fi
