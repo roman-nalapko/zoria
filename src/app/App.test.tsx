@@ -16,7 +16,7 @@ const config = {
 const frame: EtherFrame = {
   at: '2026-09-24T03:00:00.000Z',
   fragment: null,
-  harbinger: { opensIn: 3600, text: { ru: 'signal', uk: 'signal' } },
+  harbinger: { opensIn: 3600, text: { uk: 'signal', en: 'signal' } },
   kind: 'signal',
   onAir: 7,
   phase: 'static',

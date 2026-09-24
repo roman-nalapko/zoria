@@ -5,7 +5,7 @@ import { deriveEtherTiming, formatCountdown } from './time'
 const baseFrame: EtherFrame = {
   at: '2026-09-24T03:00:00.000Z',
   fragment: null,
-  harbinger: { opensIn: 21_600, text: { ru: 'x', uk: 'x' } },
+  harbinger: { opensIn: 21_600, text: { uk: 'x', en: 'x' } },
   kind: 'signal',
   onAir: 0,
   phase: 'static',
