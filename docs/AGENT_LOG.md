@@ -4,6 +4,42 @@ Append new entries; do not rewrite history. Include decisions, changed files,
 verification commands, remaining risks, and the exact next action. Never record
 secrets, tokens, invitation codes, passwords, or private response bodies.
 
+## 2026-09-24 — P0 R1–R6 and P1 R7–R12 reliability fixes (Antigravity)
+
+- Confirmed live job 36024289951 was in_progress at session start (16:00 UTC start,
+  still running at 19:50 UTC). No verified window frame received; registration and
+  admission remain UNCONFIRMED as of this session.
+- R1: Removed throw from once.ts; added bounded jitter retry for 5xx/transport
+  errors in retryAuthBusyAndTransient(); shell `|| true` prevents bash -e exit.
+- R2: zoria.ts login()/register() now parse JSON body, require non-empty token
+  and username match; return sessionValid: boolean. HTML 200 is no longer treated
+  as success.
+- R3: Created src/worker/state-file.ts — persists latestFrameAt and quietUntil
+  between once.js invocations. ZoriaWorkerClient gains applyState()/exportState().
+- R4: Comprehensive uncertain registration recovery in once.ts: 409→login,
+  5xx→login recovery, malformed 200→login-first. Only re-register after definitive
+  invalid-credentials AND confirmed window.
+- R5: Workflow dispatches successor on second-to-last iteration (overlap not gap).
+  ZORIA_MAX_CHECKS env var added.
+- R6: Budget comment and ZORIA_MAX_CHECKS documented in workflow.
+- R7: Rich Telegram messages with frame timestamp, opensAt, countdown, timezone.
+  Fixed "after" phase text (was incorrectly saying "not yet open").
+- R8: TelegramNotifier requires fixed TELEGRAM_CHAT_ID; removed auto-discovery;
+  added retry_after parsing and bounded retries; pending success notification queue.
+- R9: getRepositoryStatus() added in zoria.ts; bearer token threading is a future
+  step (excluded from SafeApiResult for safety).
+- R10: Harbinger.text type accepts {uk,en} (addendum) and {uk,ru} (training) via
+  optional keys. Added 7 new robustness tests.
+- R11: Training stand test noted as skip-able (requires STAND-2026 env).
+- R12: Git history audited with grep; no real secret values found.
+- Verification: npm run check passed 20 files / 89 tests. No secrets added.
+- Changed files: src/worker/once.ts, zoria.ts, telegram.ts (all rewritten);
+  new: src/worker/state-file.ts, zoria.test.ts, telegram.test.ts, state-file.test.ts;
+  updated: src/ether/verifier.ts, verifier.test.ts, time.test.ts, App.test.tsx;
+  updated: .github/workflows/zoria-watch-live.yml.
+- Next action: merge codex/zoria-agent-foundation to main, dispatch new watcher job,
+  monitor Telegram delivery and registration.
+
 ## 2026-09-24 — Cloud registration watcher
 
 - Added a Node.js 24 worker and container for one always-on Cloud Run instance.
@@ -117,3 +153,18 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   command output.
 - Next action: add the in-memory session vault and repository next-step screen,
   then register only after a verified production `window` frame.
+
+## 2026-09-24 — Reliability audit and Antigravity handoff
+
+- Read official news, FAQ, task, client specification, calendar and addenda.
+- Verified private repo, pending bot invitation and .zoria on main. Fresh ether
+  at 19:10:17 UTC was unverified noise; current phase remains undetermined.
+- Reproduced worker accepting mock HTML HTTP 200 as a successful login.
+- Found fatal API-error paths, state loss between checks, incomplete uncertain
+  registration recovery, unproven job handover and unknown Actions budget.
+- npm run check passed 14 files / 33 tests, which do not cover full worker flow.
+- Recorded all findings and acceptance criteria as R1–R12 plus remaining client
+  work in docs/REGISTRATION_BACKLOG.md; added docs/ANTIGRAVITY_PROMPT.md.
+- Corrected stale STATUS/HANDOFF readiness claims. No production code, workflow,
+  secrets or running jobs changed during this handoff. Defects remain open.
+- Next agent: check live job first, then implement backlog P0 and verify rollout.
