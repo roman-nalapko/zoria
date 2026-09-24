@@ -104,21 +104,23 @@ async function disableThisWorkflow(): Promise<void> {
   const token = process.env.GITHUB_TOKEN
   if (!repository || !token) return
 
-  const response = await fetch(
-    `https://api.github.com/repos/${repository}/actions/workflows/zoria-watch.yml/disable`,
-    {
-      headers: {
-        accept: 'application/vnd.github+json',
-        authorization: `Bearer ${token}`,
-        'x-github-api-version': '2022-11-28',
+  for (const workflow of ['zoria-watch.yml', 'zoria-watch-live.yml']) {
+    const response = await fetch(
+      `https://api.github.com/repos/${repository}/actions/workflows/${workflow}/disable`,
+      {
+        headers: {
+          accept: 'application/vnd.github+json',
+          authorization: `Bearer ${token}`,
+          'x-github-api-version': '2022-11-28',
+        },
+        method: 'PUT',
       },
-      method: 'PUT',
-    },
-  )
-  if (!response.ok && response.status !== 404) {
-    throw new Error(
-      `Could not disable completed workflow: HTTP ${response.status.toString()}`,
     )
+    if (!response.ok && response.status !== 404) {
+      throw new Error(
+        `Could not disable completed workflow: HTTP ${response.status.toString()}`,
+      )
+    }
   }
 }
 
