@@ -14,6 +14,15 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
 - Next action: deploy to the selected Google Cloud project with one minimum and
   maximum instance and CPU throttling disabled.
 
+## 2026-09-24 — Zero-budget watcher fallback
+
+- Added a GitHub Actions watcher that performs one signed ether check every five
+  minutes and never submits without a verified window.
+- On success it delivers the Telegram result and disables its own workflow to
+  avoid consuming further Actions minutes.
+- The workflow requires three GitHub Actions secrets and must be merged to the
+  default branch before schedules run.
+
 ## 2026-09-21 — foundation
 
 - Reviewed part 1 task, client specification, OpenAPI, scoring, calendar, and
