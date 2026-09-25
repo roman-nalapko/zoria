@@ -82,9 +82,9 @@ before Part 2 is released on September 28.
 
 ### Milestone 1.9: Quality Gate & Accessibility Verification
 
-- [ ] **T9.1**: Full test suite coverage for all client state machines, reducers, and error paths.
-- [ ] **T9.2**: WCAG 2.1 AA audit: keyboard navigation, screen-reader landmarks, focus trap, color contrast, and reduced-motion preferences.
-- [ ] **T9.3**: Secret scan on client build output (`dist/`) ensuring zero credential leakage in bundles or source maps.
+- [x] **T9.1**: Full test suite coverage for all client state machines, reducers, and error paths.
+- [x] **T9.2**: WCAG 2.1 AA audit: keyboard navigation, screen-reader landmarks, focus trap, color contrast, and reduced-motion preferences.
+- [x] **T9.3**: Secret scan on client build output (`dist/`) ensuring zero credential leakage in bundles or source maps.
 
 ---
 
