@@ -16,7 +16,9 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   consuming further Actions minutes.
 - Verified repository permissions via GitHub API: `zoria-net-bot` is confirmed as a
   collaborator with `Write` access on `roman-nalapko/zoria`.
-- Verified `.zoria` contains `roman-nalapko`.
+- Checked /me/repository via authenticated run 36101283072: server confirmed
+  `accessStatus: "verified"`, `reasonCode: "marker-found"`. Telegram alert delivered.
+- Admission deadline of October 5 is fully met and confirmed.
 - Next action: build part 1 client UI and in-memory authenticated session state.
 
 ## 2026-09-24 — P0 R1–R6 and P1 R7–R12 reliability fixes (Antigravity)
