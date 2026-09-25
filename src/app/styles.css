@@ -1100,6 +1100,321 @@ main#main-content {
   }
 }
 
+/* ── Ether Receiver (/ether) (Milestone 1.8) ─────────────────────── */
+
+.ether-page {
+  display: grid;
+  gap: 2rem;
+}
+
+.ether-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #1a2e24;
+}
+
+.ether-header h1 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+}
+
+.ether-signal-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #213a30;
+  border-radius: 99px;
+  background: #0c1814;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.signal-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #6d8e7c;
+}
+
+.signal-dot--signal {
+  background: #72eeaa;
+  box-shadow: 0 0 8px #72eeaa;
+}
+
+.signal-dot--noise {
+  background: #ffc27c;
+}
+
+.signal-dot--error {
+  background: #ff7b72;
+}
+
+.signal-dot--quiet {
+  background: #a371f7;
+}
+
+.ether-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1.5rem;
+}
+
+.ether-card {
+  padding: 1.75rem;
+  border: 1px solid #213a30;
+  border-radius: 1rem;
+  background: #0c1814;
+}
+
+.ether-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #1a2e24;
+}
+
+.ether-card__title {
+  margin: 0;
+  color: #eaf8f0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.ether-card__time,
+.fragment-counter {
+  color: #6d8e7c;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.carrier-phase {
+  color: #72eeaa;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.fingerprint-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem !important;
+  word-break: break-all;
+}
+
+.harbinger-notice {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid #5ce397;
+  border-radius: 0.5rem;
+  background: rgb(92 227 151 / 10%);
+}
+
+.harbinger-notice strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #82e6af;
+  font-size: 0.9rem;
+}
+
+.countdown-clock {
+  color: #72eeaa;
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.harbinger-quote {
+  margin: 0.65rem 0 0;
+  padding-left: 0.75rem;
+  border-left: 2px solid #5ce397;
+  color: #c9ded2;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* Fragment Assembler (T8.2) */
+.no-fragments {
+  color: #7d9e8e;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.fragment-progress-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.fragment-pip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #213a30;
+  border-radius: 0.35rem;
+  background: #08110f;
+  color: #4a6859;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.fragment-pip--collected {
+  border-color: #5ce397;
+  background: rgb(92 227 151 / 20%);
+  color: #72eeaa;
+}
+
+.lore-message {
+  padding: 1.25rem;
+  border: 1px solid #5ce397;
+  border-radius: 0.65rem;
+  background: #10251d;
+}
+
+.lore-message h3 {
+  margin: 0 0 0.5rem;
+  color: #82e6af;
+  font-size: 1rem;
+}
+
+.assembled-text {
+  margin: 0;
+  color: #eaf8f0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.assembly-incomplete-notice {
+  color: #7d9e8e;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Public Roll Section (T8.1) */
+.ether-roll-section {
+  padding: 2rem;
+  border: 1px solid #213a30;
+  border-radius: 1rem;
+  background: #0c1814;
+}
+
+.ether-roll-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #1a2e24;
+}
+
+.ether-roll-header h2 {
+  margin: 0;
+  color: #eaf8f0;
+  font-size: 1.35rem;
+}
+
+.roll-subtitle {
+  margin: 0.35rem 0 0;
+  color: #7d9e8e;
+  font-size: 0.85rem;
+}
+
+.roll-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.last-polled {
+  color: #6d8e7c;
+  font-size: 0.8rem;
+}
+
+.refresh-roll-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #3fa370;
+  border-radius: 0.45rem;
+  color: #07100e;
+  background: #72eeaa;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: filter 120ms ease;
+}
+
+.refresh-roll-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.refresh-roll-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.roll-error {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1.25rem;
+  border: 1px solid #993b33;
+  border-radius: 0.5rem;
+  color: #ff9b83;
+  background: rgb(255 123 114 / 10%);
+}
+
+.roll-empty {
+  padding: 3rem 1.5rem;
+  border: 1px dashed #213a30;
+  border-radius: 0.75rem;
+  text-align: center;
+  color: #7d9e8e;
+}
+
+.roll-table-wrapper {
+  overflow-x: auto;
+}
+
+.roll-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.roll-table th {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #213a30;
+  color: #6d8e7c;
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.roll-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #162820;
+  color: #c9ded2;
+  font-size: 0.9rem;
+}
+
+.roll-index {
+  color: #82e6af;
+  font-weight: 700;
+}
+
+.roll-participant strong {
+  color: #eaf8f0;
+}
+
 /* ── Auth pages ─────────────────────────────────────────────────── */
 
 .auth-page {

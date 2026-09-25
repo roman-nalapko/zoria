@@ -98,6 +98,8 @@ export class EtherController {
 
   getSnapshot = (): EtherSnapshot => this.#snapshot
 
+  getKey = (): EtherKey | null => this.#key
+
   subscribe = (listener: () => void): (() => void) => {
     this.#listeners.add(listener)
     return () => this.#listeners.delete(listener)

@@ -8,13 +8,16 @@ import { DashboardPage } from './DashboardPage'
 import { NewsPage } from './NewsPage'
 import { InboxPage } from './InboxPage'
 import { StagesPage } from './StagesPage'
-import { EtherPage, NotFoundPage } from './pages'
-import { appConfig, apiTransport } from './runtime'
+import { EtherPage } from './EtherPage'
+import { NotFoundPage } from './pages'
+import { appConfig, apiTransport, etherController } from './runtime'
 import type { AppConfig } from '../config/environment'
 import type { ApiTransport } from '../api/transport'
+import type { EtherController } from '../ether/controller'
 
 export interface AppProps {
   config?: AppConfig
+  controller?: EtherController
   transport?: ApiTransport
 }
 
@@ -29,6 +32,7 @@ export interface AppProps {
  */
 export function App({
   config = appConfig,
+  controller = etherController,
   transport = apiTransport,
 }: AppProps) {
   return (
@@ -62,7 +66,12 @@ export function App({
                   path="/stages"
                   element={<StagesPage transport={transport} />}
                 />
-                <Route path="/ether" element={<EtherPage />} />
+                <Route
+                  path="/ether"
+                  element={
+                    <EtherPage controller={controller} transport={transport} />
+                  }
+                />
               </Route>
 
               <Route path="*" element={<NotFoundPage />} />

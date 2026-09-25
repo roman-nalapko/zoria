@@ -77,8 +77,8 @@ before Part 2 is released on September 28.
 
 ### Milestone 1.8: Ether Roll & Fragment Assembler (`/ether`)
 
-- [ ] **T8.1**: Public roll viewer (`GET /ether/roll`) displaying participant airwave sequence (max 1 poll/min).
-- [ ] **T8.2**: Fragment assembler: collects broadcast letter pieces (`fragment: { n, of, text }`) across accepted frames and reconstructs the full lore message.
+- [x] **T8.1**: Public roll viewer (`GET /ether/roll`) displaying participant airwave sequence (max 1 poll/min).
+- [x] **T8.2**: Fragment assembler: collects broadcast letter pieces (`fragment: { n, of, text }`) across accepted frames and reconstructs the full lore message.
 
 ### Milestone 1.9: Quality Gate & Accessibility Verification
 

@@ -220,3 +220,9 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   - Stages view (`src/app/StagesPage.tsx`) with released parts master-list, pending/acknowledged pills, full technical specification Markdown body, official errata notices (`errata`, `errataAt`), and immediate acknowledgment action.
   - Wired into `App.tsx` routing and added dedicated styling in `styles.css`.
 - Quality Gate: `npm run check` and `npm run build` pass completely (32 test files, 138 tests, 0 lint warnings, 0 type errors).
+- Implemented Milestone 1.8 (Ether Roll & Fragment Assembler `/ether`):
+  - Fragment Assembler (`src/ether/assembler.ts`) with pure state reduction (`reduceFragmentAssembly`), collecting pieces across accepted frames and reconstructing complete lore messages without out-of-order bugs or duplicates.
+  - Public Airwave Roll service (`src/ether/roll.ts`) with Ed25519 envelope signature verification and client-side 60s minimum poll interval enforcement.
+  - Ether Receiver Page (`src/app/EtherPage.tsx`) wiring live carrier telemetry, Harbinger countdown clock, Fragment Assembler progress bar, and Public Roll table viewer.
+  - Route connected in `App.tsx` and styling added in `styles.css`.
+- Quality Gate: `npm run check` and `npm run build` pass completely (35 test files, 147 tests, 0 lint warnings, 0 type errors).
