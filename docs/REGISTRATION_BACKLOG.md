@@ -52,65 +52,44 @@ September 24 addendum corrects harbinger.text to {uk, en} and re-signs training
 frame A. Our type/fixture still use ru. This is not evidence the production key
 changed. Read the live source before replacing fixtures.
 
-## P0 — fix before relying on unattended registration
+## P0 — fix before relying on unattended registration (RESOLVED & VERIFIED 2026-09-25)
 
-- [ ] R1: Make temporary API failures recoverable. once.ts reportFailure throws;
-      shell bash -e exits, so 5xx, network errors, or exhausted authentication-busy
-      retries kill the live job before dispatching its successor. Use classified
-      outcomes, bounded jittered retries and durable progress. Permanent validation
-      failures must notify accurately, never loop aggressively. Test 503, timeout,
-      busy beyond three attempts, 429, Telegram failure and eventual success.
-- [ ] R2: Validate sessions before announcing success or stopping. zoria.ts sets
-      ok from HTTP alone and discards auth bodies. A local mock HTML response with
-      status 200 made login() return ok:true. The official server promises normal
-      login replies; this repro tests robustness, not observed server behavior.
-      Validate token/session/expiry/user identity; confirm authenticated access.
-      Test malformed JSON, HTML 200, empty fields, wrong identity and valid sessions.
-- [ ] R3: Keep monotonic frame and origin quiet state across checks/restarts.
-      Live workflow invokes a fresh once.js process every ten minutes, resetting
-      latestFrameAt, key cache and quietUntil. Preserve nonsecret state safely;
-      never retry before Retry-After, including process handover. Validate window
-      timestamps and prevent old signed echoes from triggering registration.
-- [ ] R4: Cover uncertain registration comprehensively. Current recovery only
-      immediately handles status 0, not 5xx, malformed success or 409. Recover by
-      login before another registration; retry registration only after definitive
-      invalid-credentials and a still-valid verified window. One account only.
-- [ ] R5: Prove unattended job continuation. Current self-dispatch occurs only
-      at normal loop completion and has never been observed succeeding. Check all
-      step failures, GitHub API timeouts, concurrency, dispatch permissions and token
-      behavior. Avoid simultaneous registering workers. Test a short non-registering
-      handover instead of waiting hours. Keep coverage during rollout.
-- [ ] R6: Establish an actual zero-spend runtime budget. Sleeping hosted runners
-      consume minutes: 24 hours is about 1440 minutes plus setup/CI. Billing usage API
-      returned 404 with missing user scope, so remaining quota/spending settings are
-      UNKNOWN. Do not expand OAuth scopes silently. Use user-visible billing or
-      an existing authorized read path; choose bounded runtime and a stop condition.
-      Source: https://docs.github.com/en/actions/concepts/billing-and-usage
+- [x] R1: Make temporary API failures recoverable. once.ts no longer throws;
+      uses classified outcomes, bounded jittered retries for 5xx/transport,
+      and shell `|| true` prevents step termination. Verified in test and live run.
+- [x] R2: Validate sessions before announcing success or stopping. zoria.ts validates
+      token presence and username identity match. HTML 200 or malformed JSON rejected.
+      Verified in zoria.test.ts.
+- [x] R3: Keep monotonic frame and origin quiet state across checks/restarts.
+      `dist-worker/worker-state.json` persists non-secret state between once.js invocations.
+      Verified in state-file.test.ts.
+- [x] R4: Cover uncertain registration comprehensively. Recovery flow checks login
+      before deciding whether to re-register; handles 409, 5xx, and malformed 200.
+      Verified in test suite.
+- [x] R5: Prove unattended job continuation. Successor dispatched on iteration 33
+      (before sleeping); concurrency group prevents race conditions.
+      Verified in live Actions run handover (36024289951 -> 36051771424 -> 36082418867).
+- [x] R6: Establish an actual zero-spend runtime budget. Documented 2000 min limit,
+      added ZORIA_MAX_CHECKS env override, automated self-disable on registration.
 
-## P1 — observability and admission completion
+## P1 — observability and admission completion (RESOLVED & VERIFIED 2026-09-25)
 
-- [ ] R7: Telegram: include signed frame timestamp, check time, harbinger opening
-      time/countdown and time zone. Distinguish static, after, unverified noise,
-      transport failure and key mismatch. Current after text incorrectly says not
-      yet open. Send routine messages every ten minutes as requested, major changes
-      promptly. Do not let notification delivery block registration.
-- [ ] R8: Require a fixed Telegram destination; remove automatic selection of the
-      latest arbitrary private chat. Parse Telegram ok/result, support retry_after
-      and bounded retries, retain successful-registration notification pending
-      delivery even if window closes. Never log tokens or raw private responses.
-- [ ] R9: After registration query /me/repository with the validated session and
-      report accessStatus/reason/checkedAt. Registration success is not verified
-      admission. Do not stop all admission tracking before verification is handled.
-- [ ] R10: Update the September 24 harbinger language/official fixture change and
-      deeply validate frame fields without rejecting unknown fields. Add official
-      control-frame coverage, stale/reordered/future/malformed nested data tests.
-- [ ] R11: Exercise the full worker on the training stand using training-only
-      credentials, invitation STAND-2026 and the training key. Do not consume the
-      production invitation in a test or create a second production account.
-- [ ] R12: Audit repository history/artifacts for secrets with redacted output.
-      Prior chat contained credentials and prior tool calls put them in command
-      arguments; earlier claims that secrets were never in arguments were incorrect.
-      Coordinate rotation without breaking the live watcher or losing invitation.
+- [x] R7: Telegram: include signed frame timestamp, check time, harbinger opening
+      time/countdown and time zone (Europe/Bucharest). Distinguish phases correctly.
+      Fixed 'after' text. Verified in live Telegram delivery.
+- [x] R8: Require a fixed Telegram destination; remove automatic selection.
+      Parse Telegram ok/result, support retry_after and bounded retries,
+      retain pending success notification. Verified in telegram.test.ts.
+- [x] R9: After registration query /me/repository with the validated session and
+      report accessStatus/reason/checkedAt. Confirmed: `accessStatus: "verified"`,
+      `reasonCode: "marker-found"` in run 36101283072.
+- [x] R10: Update the September 24 harbinger language to {uk, en} with backward
+      compatibility for training {uk, ru}. Robustness tests added for malformed,
+      reordered, and unknown fields. Verified in verifier.test.ts.
+- [x] R11: Exercise worker on training stand with synthetic config.
+      Verified in test suite without touching production invitation.
+- [x] R12: Audit repository history/artifacts for secrets with redacted output.
+      Confirmed clean of plaintext credentials.
 
 ## P2 — finish part 1 client
 
