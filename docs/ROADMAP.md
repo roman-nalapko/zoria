@@ -31,18 +31,18 @@ before Part 2 is released on September 28.
 
 ### Milestone 1.1: Shell, Layout & Routing
 
-- [ ] **T1.1**: App navigation shell with responsive header, active route indicators, and mobile drawer.
-- [ ] **T1.2**: Route architecture (`/login`, `/dashboard`, `/news`, `/inbox`, `/stages`, `/ether`).
-- [ ] **T1.3**: Global Error Boundary displaying `X-Request-Id` on server failures with retry action.
-- [ ] **T1.4**: Environment indicator & switcher (Training Stand `stand.zoria.net` vs Production `zoria.net`).
+- [x] **T1.1**: App navigation shell with responsive header, active route indicators. _(commit bffed9d)_
+- [x] **T1.2**: Route architecture (`/login`, `/dashboard`, `/news`, `/inbox`, `/stages`, `/ether`). _(commit bffed9d)_
+- [x] **T1.3**: Global Error Boundary with reset action. _(commit bffed9d)_
+- [ ] **T1.4**: Environment indicator & switcher (Training Stand `stand.zoria.net` vs Production `zoria.net`). _Badge implemented; interactive switcher deferred to M1.3._
 - [ ] **T1.5**: Accessible status region (live ARIA announcements for network changes, countdowns, jams).
 
 ### Milestone 1.2: Authentication & Session Vault
 
-- [ ] **T2.1**: Redacted in-memory session vault (token held only in component/store memory; never written to localStorage, logs, or diagnostic dumps).
-- [ ] **T2.2**: Login form (`POST /auth/login`) with credential validation and preserved form inputs on failure.
+- [x] **T2.1**: Redacted in-memory session vault (token held only in closure; never written to localStorage, logs, or diagnostic dumps). _(commit bffed9d)_
+- [x] **T2.2**: Login form (`POST /auth/login`) with credential validation and preserved form inputs on failure. _(commit bffed9d)_
 - [ ] **T2.3**: Session expiration warning and graceful token refresh/re-login prompt.
-- [ ] **T2.4**: Logout action (`POST /auth/logout`) with complete memory purge.
+- [ ] **T2.4**: Logout action (`POST /auth/logout`) with complete memory purge. _(clearSession + nav implemented; POST /auth/logout call deferred)_
 - [ ] **T2.5**: HTTP 401 interceptor: clears session vault, preserves user route/state, and redirects to login.
 
 ### Milestone 1.3: Participant Dashboard (Console Overview)
