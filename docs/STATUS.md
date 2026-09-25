@@ -18,11 +18,12 @@ after every meaningful implementation session.
   - Automatically disabled `zoria-watch-live.yml` and `zoria-watch.yml` at 05:02:42 UTC
     to halt Actions minute consumption.
   - Job finished with status `success`.
-- **Repository admission status**:
-  - `zoria-net-bot` has accepted the repository invitation and has `Write`
-    collaborator permission on `roman-nalapko/zoria`.
-  - `.zoria` on `main` contains `roman-nalapko`.
-  - Server-side `accessStatus: verified` check deadline is October 5 21:00 UTC.
+- **Repository admission status (CONFIRMED VERIFIED)**:
+  - `accessStatus: "verified"`, `reasonCode: "marker-found"`.
+  - Confirmed via authenticated `GET /me/repository` call in run 36101283072.
+  - `zoria-net-bot` is confirmed as a `Write` collaborator on `roman-nalapko/zoria`.
+  - `.zoria` contains `roman-nalapko`.
+  - Official admission deadline of October 5 is fully met and verified.
 
 ## Repository
 
