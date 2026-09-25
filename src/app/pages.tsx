@@ -23,14 +23,6 @@ function Placeholder({
   )
 }
 
-export function NewsPage() {
-  return <Placeholder title="News" milestone="Milestone 1.6" />
-}
-
-export function InboxPage() {
-  return <Placeholder title="Inbox" milestone="Milestone 1.7" />
-}
-
 export function StagesPage() {
   return <Placeholder title="Stages" milestone="Milestone 1.8" />
 }

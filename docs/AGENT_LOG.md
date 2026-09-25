@@ -207,3 +207,11 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   - Tournament overview counters: unread news, inbox, released stages, acknowledged stages.
   - Background polling hook (`useParticipantDashboard`) syncing `/me/summary` every 60s, pausing on hidden document visibility, and invalidating repository data on `repositoryAt` change.
 - Quality Gate: `npm run check` passes completely (25 test files, 116 tests, 0 lint warnings, 0 type errors).
+- Implemented Milestone 1.5 (News Feed `/news`):
+  - Safe Markdown parser (`SafeMarkdown.tsx`): sanitized link targets, code blocks, lists, quotes, without executing raw server HTML.
+  - News service (`src/news/service.ts`) with stable restartable pagination (`limit`, `offset`).
+  - Master-detail News page (`src/app/NewsPage.tsx`) with published timestamp in local timezone.
+- Implemented Milestone 1.6 (Participant Inbox `/inbox`):
+  - Inbox service (`src/inbox/service.ts`) with `GET /inbox`, `GET /inbox/{id}`, and `POST /inbox/{id}/read`.
+  - Inbox page (`src/app/InboxPage.tsx`) with unread indicators, repository notice badges, full letter viewer, and optimistic mark-as-read acknowledgment action.
+- Quality Gate: `npm run check` passes completely (30 test files, 133 tests, 0 lint warnings, 0 type errors).

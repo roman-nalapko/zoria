@@ -5,13 +5,9 @@ import { AppShell } from './AppShell'
 import { RequireAuth } from './RequireAuth'
 import { LoginPage } from './LoginPage'
 import { DashboardPage } from './DashboardPage'
-import {
-  EtherPage,
-  InboxPage,
-  NewsPage,
-  NotFoundPage,
-  StagesPage,
-} from './pages'
+import { NewsPage } from './NewsPage'
+import { InboxPage } from './InboxPage'
+import { EtherPage, NotFoundPage, StagesPage } from './pages'
 import { appConfig, apiTransport } from './runtime'
 import type { AppConfig } from '../config/environment'
 import type { ApiTransport } from '../api/transport'
@@ -53,8 +49,14 @@ export function App({
                   path="/dashboard"
                   element={<DashboardPage transport={transport} />}
                 />
-                <Route path="/news" element={<NewsPage />} />
-                <Route path="/inbox" element={<InboxPage />} />
+                <Route
+                  path="/news"
+                  element={<NewsPage transport={transport} />}
+                />
+                <Route
+                  path="/inbox"
+                  element={<InboxPage transport={transport} />}
+                />
                 <Route path="/stages" element={<StagesPage />} />
                 <Route path="/ether" element={<EtherPage />} />
               </Route>

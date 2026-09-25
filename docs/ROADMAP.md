@@ -59,15 +59,15 @@ before Part 2 is released on September 28.
 
 ### Milestone 1.5: News Feed (`/news`)
 
-- [ ] **T5.1**: Stable, restartable pagination for news list (`GET /news`).
-- [ ] **T5.2**: News detail viewer (`GET /news/{id}`) with publication timestamp in user's local timezone.
-- [ ] **T5.3**: Safe Markdown renderer: strict tag allowlist, no raw server HTML execution, external links forced to `rel="noopener noreferrer"`.
+- [x] **T5.1**: Stable, restartable pagination for news list (`GET /news`).
+- [x] **T5.2**: News detail viewer (`GET /news` item master-detail) with publication timestamp in user's local timezone.
+- [x] **T5.3**: Safe Markdown renderer: strict tag allowlist, no raw server HTML execution, external links forced to `rel="noopener noreferrer"`.
 
 ### Milestone 1.6: Inbox & Organizer Communications (`/inbox`)
 
-- [ ] **T6.1**: Inbox message list (`GET /me/inbox`) with unread indicators and category badges.
-- [ ] **T6.2**: Message detail view with safe body rendering.
-- [ ] **T6.3**: Explicit "mark as read" action (`POST /me/inbox/{id}/read`) with optimistic local update.
+- [x] **T6.1**: Inbox message list (`GET /inbox`) with unread indicators and category badges.
+- [x] **T6.2**: Message detail view with safe body rendering.
+- [x] **T6.3**: Explicit "mark as read" action (`POST /inbox/{id}/read`) with optimistic local update.
 
 ### Milestone 1.7: Stages & Tournament Briefings (`/stages`)
 
