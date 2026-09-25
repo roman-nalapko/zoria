@@ -19,6 +19,15 @@ export interface RepositoryStatus {
   checkedAt: string | null
 }
 
+export interface SummaryStatus {
+  unread: number
+  releasedStages: number
+  acknowledgedStages: number
+  latestNews: string | null
+  repositoryAt: string | null
+  serverTime: string
+}
+
 export class ZoriaWorkerClient {
   readonly #config: WorkerConfig
   #key: EtherKey | null = null
@@ -140,6 +149,56 @@ export class ZoriaWorkerClient {
         reason: typeof obj.reason === 'string' ? obj.reason : null,
         reasonCode: typeof obj.reasonCode === 'string' ? obj.reasonCode : null,
         checkedAt: typeof obj.checkedAt === 'string' ? obj.checkedAt : null,
+      }
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Log in and retrieve the participant summary (/me/summary).
+   * Extracts the bearer token in memory, performs GET /me/summary,
+   * and discards the token. Never logs or persists bearer token.
+   */
+  async checkMySummary(): Promise<SummaryStatus | null> {
+    const internal = await this.#request('/auth/login', true, {
+      password: this.#config.password,
+      username: this.#config.username,
+    })
+    if (!internal.ok || !internal.rawBody) return null
+    if (!this.#validateSession(internal.rawBody)) return null
+    const token = this.extractBearerToken(internal.rawBody)
+    if (!token) return null
+    return this.getSummary(token)
+  }
+
+  /**
+   * Query /me/summary with a confirmed session.
+   * Returns null on transport failure or missing session.
+   */
+  async getSummary(bearerToken: string): Promise<SummaryStatus | null> {
+    if (!bearerToken) return null
+    const internal = await this.#requestWithBearer('/me/summary', bearerToken)
+    if (!internal.ok || internal.rawBody === null) return null
+    try {
+      const parsed: unknown = JSON.parse(internal.rawBody)
+      if (typeof parsed !== 'object' || parsed === null) return null
+      const obj = parsed as Record<string, unknown>
+      return {
+        acknowledgedStages:
+          typeof obj.acknowledgedStages === 'number'
+            ? obj.acknowledgedStages
+            : 0,
+        latestNews: typeof obj.latestNews === 'string' ? obj.latestNews : null,
+        releasedStages:
+          typeof obj.releasedStages === 'number' ? obj.releasedStages : 0,
+        repositoryAt:
+          typeof obj.repositoryAt === 'string' ? obj.repositoryAt : null,
+        serverTime:
+          typeof obj.serverTime === 'string'
+            ? obj.serverTime
+            : new Date().toISOString(),
+        unread: typeof obj.unread === 'number' ? obj.unread : 0,
       }
     } catch {
       return null

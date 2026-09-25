@@ -231,3 +231,7 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   - Secret scan on production build output (`dist/`): verified zero tokens, passwords, invitations, or credentials leaked into production JavaScript bundles or CSS.
   - Accessibility audit: verified semantic HTML headings, screen reader landmarks (`<main>`, `<aside>`, `<nav>`, `<article>`, `<header>`), `aria-labelledby`, `role="list"`, `aria-current`, and high-contrast color scheme with reduced-motion media queries.
 - Phase 1 (Admission, Registration, Network Console & Battle Client) is now FULLY COMPLETE ahead of Part 2 game specifications release on 2026-09-28.
+- Added automated tournament digest & notification system (`src/worker/check-digest.ts`, `.github/workflows/zoria-check-digest.yml`):
+  - Lightweight GitHub Actions cron running every 4 hours or manually via `workflow_dispatch`.
+  - Authenticates securely in-memory, polls `/me/summary`, and delivers Telegram alerts whenever unread letters, newly released stages, errata, or repository review changes appear.
+  - Zero compute waste (~15s per run), keeps participant fully informed before Part 2 release without manual checking.
