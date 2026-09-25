@@ -68,6 +68,8 @@ export function AppShell({ config, transport = apiTransport }: AppShellProps) {
             <span
               className={`env-badge env-badge--${config.environment}`}
               title={`API: ${config.apiUrl}`}
+              role="status"
+              aria-label={`Environment: ${config.environment}, API: ${config.apiUrl}`}
             >
               {config.environment}
             </span>
@@ -97,6 +99,18 @@ export function AppShell({ config, transport = apiTransport }: AppShellProps) {
           </div>
         </nav>
       </header>
+
+      {/* T1.5 Accessible live status region for screen readers */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="visually-hidden"
+      >
+        {authenticated && info
+          ? `Authenticated as ${info.username}. Active environment is ${config.environment}.`
+          : `Signed out. Active environment is ${config.environment}.`}
+      </div>
 
       <SessionExpiryBanner />
 

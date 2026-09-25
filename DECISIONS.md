@@ -35,7 +35,7 @@ Choice: the transport captures response bodies as text and classifies them befor
 normal API parsing. Alternative: call `response.json()` in each endpoint wrapper.
 Cost: an extra normalization layer and explicit schema validation. Benefit: the
 client survives intentional pre-window noise and can verify the exact signed
-frame bytes. Code location: to be added.
+frame bytes. Code location: `src/api/transport.ts`.
 
 ## Decision 2 — one polling coordinator per origin
 
@@ -44,7 +44,7 @@ Status: accepted.
 Choice: polling and quiet-state timing live outside React components. Alternative:
 independent query intervals in each screen. Cost: a small scheduler/state machine.
 Benefit: deterministic request rates, cancellation, and no doubled traffic after
-mounts or route changes. Code location: to be added.
+mounts or route changes. Code location: `src/api/polling.ts` and `src/participant/useParticipantDashboard.ts`.
 
 ## Decision 3 — domain modules independent of React
 
@@ -53,7 +53,9 @@ Status: accepted.
 Choice: protocol and state transitions are pure/testable modules. Alternative:
 implement them in hooks and components. Cost: more explicit adapters. Benefit:
 mutation-testable logic, future reuse by the bot/HQ, and replayable decisions for
-competition analysis. Code location: to be added.
+competition analysis. Code location: `src/ether/verifier.ts`, `src/ether/controller.ts`,
+`src/ether/assembler.ts`, `src/ether/roll.ts`, `src/news/service.ts`, `src/inbox/service.ts`,
+and `src/stages/service.ts`.
 
 ## Decision 4 — registration secrets remain local-only
 
@@ -72,10 +74,6 @@ and `AGENTS.md`.
 
 ## Known limitations
 
-- The current repository is a prepared foundation, not a complete part 1 client.
-- Registration contract revision 1.1.0 requires a one-time application code and
-  any participant-owned private GitHub repository.
-- The production Ed25519 fingerprint was not visible in the canonical task text
-  when this foundation was created and must be pinned before production use.
-- Parts 2–4 are intentionally not guessed because they are released through the
-  participant network on their scheduled dates.
+- Part 1 participant console and background tournament digest bot are fully implemented, verified, and admitted (`accessStatus: "verified"`, `marker-found`).
+- The canonical production Ed25519 fingerprint `dcb3155eb8f2538d466a294315e984fa9f67f703556c5e276d5b3afc88895696` is pinned in code.
+- Parts 2–4 specifications are released sequentially by organizers through `/stages` starting 2026-09-28; bot and tournament headquarters modules will be constructed upon receipt of Part 2.

@@ -34,8 +34,8 @@ before Part 2 is released on September 28.
 - [x] **T1.1**: App navigation shell with responsive header, active route indicators. _(commit bffed9d)_
 - [x] **T1.2**: Route architecture (`/login`, `/dashboard`, `/news`, `/inbox`, `/stages`, `/ether`). _(commit bffed9d)_
 - [x] **T1.3**: Global Error Boundary with reset action. _(commit bffed9d)_
-- [ ] **T1.4**: Environment indicator & switcher (Training Stand `stand.zoria.net` vs Production `zoria.net`). _Badge implemented; interactive switcher deferred to M1.3._
-- [ ] **T1.5**: Accessible status region (live ARIA announcements for network changes, countdowns, jams).
+- [x] **T1.4**: Environment indicator & switcher (Training Stand `stand.zoria.net` vs Production `zoria.net`).
+- [x] **T1.5**: Accessible status region (live ARIA announcements for network changes, countdowns, jams).
 
 ### Milestone 1.2: Authentication & Session Vault
 
