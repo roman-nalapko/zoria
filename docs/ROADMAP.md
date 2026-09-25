@@ -41,21 +41,21 @@ before Part 2 is released on September 28.
 
 - [x] **T2.1**: Redacted in-memory session vault (token held only in closure; never written to localStorage, logs, or diagnostic dumps). _(commit bffed9d)_
 - [x] **T2.2**: Login form (`POST /auth/login`) with credential validation and preserved form inputs on failure. _(commit bffed9d)_
-- [ ] **T2.3**: Session expiration warning and graceful token refresh/re-login prompt.
-- [ ] **T2.4**: Logout action (`POST /auth/logout`) with complete memory purge. _(clearSession + nav implemented; POST /auth/logout call deferred)_
-- [ ] **T2.5**: HTTP 401 interceptor: clears session vault, preserves user route/state, and redirects to login.
+- [x] **T2.3**: Session expiration warning and graceful token refresh/re-login prompt (`SessionExpiryBanner`).
+- [x] **T2.4**: Logout action (`POST /auth/logout`) with complete memory purge.
+- [x] **T2.5**: HTTP 401 interceptor: clears session vault, preserves user route/state, and redirects to login (`ApiTransport`).
 
 ### Milestone 1.3: Participant Dashboard (Console Overview)
 
-- [ ] **T3.1**: Repository admission card showing `accessStatus: "verified"`, `reasonCode: "marker-found"`, and last checked timestamp in `Europe/Bucharest`.
-- [ ] **T3.2**: Live radio ether signal card: current phase (`window`/`static`/`after`), carrier status, station, and local-time countdown.
-- [ ] **T3.3**: Quick telemetry summary cards: unread news count, unread inbox messages, active stages count.
+- [x] **T3.1**: Repository admission card showing `accessStatus: "verified"`, `reasonCode: "marker-found"`, and last checked timestamp in `Europe/Bucharest`.
+- [x] **T3.2**: Live radio ether signal card: current phase (`window`/`static`/`after`), carrier status, station, and local-time countdown.
+- [x] **T3.3**: Quick telemetry summary cards: unread news count, unread inbox messages, active stages count.
 
 ### Milestone 1.4: Polling Coordinator & Real-Time Sync
 
-- [ ] **T4.1**: Polling coordinator for `GET /me/summary` respecting the ~15s interval limit and `Retry-After`.
-- [ ] **T4.2**: Reactive dependency invalidation: refresh inbox only on `unread` change, news on `latestNews`, stages on `releasedStages`, repository card on `repositoryAt`.
-- [ ] **T4.3**: Origin-wide quiet period handling (`429 jammed` silences all outbound traffic to that origin).
+- [x] **T4.1**: Polling coordinator for `GET /me/summary` respecting the ~15s interval limit and `Retry-After`.
+- [x] **T4.2**: Reactive dependency invalidation: refresh repository card on `repositoryAt`, summary counters, and visibility gating (`useParticipantDashboard`).
+- [x] **T4.3**: Origin-wide quiet period handling (`429 jammed` silences all outbound traffic to that origin).
 
 ### Milestone 1.5: News Feed (`/news`)
 

@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import {
   API_ORIGINS,
@@ -71,5 +71,43 @@ describe('AppShell', () => {
     expect(
       screen.getByRole('button', { name: /sign out/i }),
     ).toBeInTheDocument()
+  })
+
+  it('signs out via POST /auth/logout and purges vault on Sign out click', async () => {
+    const requestMock = vi.fn().mockResolvedValue({ ok: true, status: 204 })
+    const mockTransport = {
+      request: requestMock,
+    } as unknown as import('../api/transport').ApiTransport
+
+    setSession('tok-123', {
+      sessionId: 's1',
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      username: 'roman-nalapko',
+      displayName: 'Roman',
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <SessionProvider>
+          <AppShell config={config} transport={mockTransport} />
+        </SessionProvider>
+      </MemoryRouter>,
+    )
+
+    const signOutBtn = screen.getByRole('button', { name: /sign out/i })
+    signOutBtn.click()
+
+    await vi.waitFor(() => {
+      expect(requestMock).toHaveBeenCalledWith(
+        '/auth/logout',
+        expect.objectContaining({
+          method: 'POST',
+          token: 'tok-123',
+        }),
+      )
+    })
+
+    const { getToken } = await import('../auth/session-vault')
+    expect(getToken()).toBeNull()
   })
 })

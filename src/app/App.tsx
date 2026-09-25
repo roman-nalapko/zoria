@@ -39,7 +39,7 @@ export function App({
       <SessionProvider>
         <BrowserRouter>
           <Routes>
-            <Route element={<AppShell config={config} />}>
+            <Route element={<AppShell config={config} transport={transport} />}>
               {/* Public routes */}
               <Route
                 path="/login"
@@ -49,7 +49,10 @@ export function App({
               {/* Protected routes */}
               <Route element={<RequireAuth />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route
+                  path="/dashboard"
+                  element={<DashboardPage transport={transport} />}
+                />
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/inbox" element={<InboxPage />} />
                 <Route path="/stages" element={<StagesPage />} />

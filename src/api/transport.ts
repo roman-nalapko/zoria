@@ -21,8 +21,10 @@ export interface RequestOptions {
 export interface TransportOptions {
   fetch?: typeof fetch
   now?: () => number
+  onUnauthorized?: (response: RawApiResponse) => void
   quietPeriod?: OriginQuietPeriod
   timeoutMs?: number
+  tokenProvider?: () => string | null
 }
 
 export class QuietPeriodError extends Error {
@@ -38,6 +40,8 @@ export class ApiTransport {
   readonly #now: () => number
   readonly #quiet: OriginQuietPeriod
   readonly #timeoutMs: number
+  #onUnauthorized: ((response: RawApiResponse) => void) | null = null
+  #tokenProvider: (() => string | null) | null = null
 
   constructor(baseUrl: string, options: TransportOptions = {}) {
     this.#baseUrl = baseUrl.replace(/\/$/, '')
@@ -46,6 +50,18 @@ export class ApiTransport {
     this.#now = options.now ?? Date.now
     this.#quiet = options.quietPeriod ?? new OriginQuietPeriod()
     this.#timeoutMs = options.timeoutMs ?? 10_000
+    this.#onUnauthorized = options.onUnauthorized ?? null
+    this.#tokenProvider = options.tokenProvider ?? null
+  }
+
+  setUnauthorizedHandler(
+    handler: ((response: RawApiResponse) => void) | null,
+  ): void {
+    this.#onUnauthorized = handler
+  }
+
+  setTokenProvider(provider: (() => string | null) | null): void {
+    this.#tokenProvider = provider
   }
 
   get quietPeriod(): OriginQuietPeriod {
@@ -72,10 +88,12 @@ export class ApiTransport {
     }
     options.signal?.addEventListener('abort', abortFromCaller, { once: true })
 
+    const token = options.token ?? this.#tokenProvider?.() ?? undefined
+
     const headers = new Headers({ Accept: 'application/json' })
     if (options.body !== undefined)
       headers.set('Content-Type', 'application/json')
-    if (options.token) headers.set('Authorization', `Bearer ${options.token}`)
+    if (token) headers.set('Authorization', `Bearer ${token}`)
 
     try {
       const requestInit: RequestInit = {
@@ -103,7 +121,7 @@ export class ApiTransport {
         this.#quiet.silenceFor(retryAfterMs ?? 30_000, this.#now())
       }
 
-      return {
+      const result: RawApiResponse = {
         body,
         error,
         headers: response.headers,
@@ -112,6 +130,20 @@ export class ApiTransport {
         retryAfterMs,
         status: response.status,
       }
+
+      if (
+        response.status === 401 &&
+        path !== '/auth/login' &&
+        path !== '/auth/register'
+      ) {
+        try {
+          this.#onUnauthorized?.(result)
+        } catch {
+          // handler errors should not break transport
+        }
+      }
+
+      return result
     } finally {
       clearTimeout(timeout)
       options.signal?.removeEventListener('abort', abortFromCaller)

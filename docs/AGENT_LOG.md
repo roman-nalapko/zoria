@@ -185,3 +185,25 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
 - Corrected stale STATUS/HANDOFF readiness claims. No production code, workflow,
   secrets or running jobs changed during this handoff. Defects remain open.
 - Next agent: check live job first, then implement backlog P0 and verify rollout.
+
+## 2026-09-25 — Phase 1 Client Implementation (Milestones 1.1, 1.2, 1.3, 1.4)
+
+- Admission and registration confirmed live: verified admission status with `marker-found`.
+- Implemented Milestone 1.1 (Shell & Routing):
+  - Responsive AppShell navigation with active link highlighting, environment badge, and user details.
+  - Route architecture with `react-router-dom`: `/login`, `/dashboard`, `/news`, `/inbox`, `/stages`, `/ether`.
+  - Global Error Boundary with state reset.
+- Implemented Milestone 1.2 (Authentication & Session Vault):
+  - In-memory session vault (`src/auth/session-vault.ts`): bearer tokens never touch localStorage or logs.
+  - `SessionProvider` React context mirroring vault state to components via subscriber callbacks.
+  - `LoginPage` form with validation and redirect to `/dashboard`.
+  - `SessionExpiryBanner`: alerts participants when session expiry is <= 10m or expired.
+  - Server logout: `POST /auth/logout` with complete memory purge.
+  - HTTP 401 interceptor in `ApiTransport`: auto-clears vault on unexpected 401 responses.
+- Implemented Milestone 1.3 & 1.4 (Participant Dashboard & Polling Integration):
+  - Repository admission card with live status (`verified`), reason code (`marker-found`), and Europe/Bucharest timestamp formatting.
+  - Direct repository link to GitHub with verified status indicator.
+  - Ether receiver telemetry card with phase, countdown, and key fingerprint.
+  - Tournament overview counters: unread news, inbox, released stages, acknowledged stages.
+  - Background polling hook (`useParticipantDashboard`) syncing `/me/summary` every 60s, pausing on hidden document visibility, and invalidating repository data on `repositoryAt` change.
+- Quality Gate: `npm run check` passes completely (25 test files, 116 tests, 0 lint warnings, 0 type errors).

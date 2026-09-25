@@ -56,4 +56,64 @@ describe('ApiTransport', () => {
     await transport.request('/ether')
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
+
+  it('supplies token from tokenProvider when options.token is omitted', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('{}', { status: 200 }))
+    const transport = new ApiTransport('https://stand.zoria.net/api/v1', {
+      fetch: fetchMock,
+      tokenProvider: () => 'dynamic-secret-token',
+    })
+
+    await transport.request('/me/summary')
+
+    const firstCall = fetchMock.mock.calls[0]
+    expect(firstCall).toBeDefined()
+    const requestInit = firstCall?.[1]
+    const callHeaders =
+      requestInit?.headers instanceof Headers ? requestInit.headers : null
+    expect(callHeaders?.get('Authorization')).toBe(
+      'Bearer dynamic-secret-token',
+    )
+  })
+
+  it('triggers onUnauthorized on 401 for authenticated endpoints', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response('{"error":{"code":"unauthorized"}}', { status: 401 }),
+      )
+    const onUnauthorized = vi.fn()
+    const transport = new ApiTransport('https://stand.zoria.net/api/v1', {
+      fetch: fetchMock,
+      onUnauthorized,
+    })
+
+    const response = await transport.request('/me/summary')
+
+    expect(response.status).toBe(401)
+    expect(onUnauthorized).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not trigger onUnauthorized on 401 for /auth/login', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response('{"error":{"code":"invalid-credentials"}}', {
+        status: 401,
+      }),
+    )
+    const onUnauthorized = vi.fn()
+    const transport = new ApiTransport('https://stand.zoria.net/api/v1', {
+      fetch: fetchMock,
+      onUnauthorized,
+    })
+
+    const response = await transport.request('/auth/login', {
+      method: 'POST',
+      body: { username: 'test', password: 'bad' },
+    })
+
+    expect(response.status).toBe(401)
+    expect(onUnauthorized).not.toHaveBeenCalled()
+  })
 })

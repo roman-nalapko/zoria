@@ -1,23 +1,39 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useSession } from './useSession'
+import { SessionExpiryBanner } from './SessionExpiryBanner'
 import type { AppConfig } from '../config/environment'
+import type { ApiTransport } from '../api/transport'
+import { apiTransport } from './runtime'
 
 export interface AppShellProps {
   config: AppConfig
+  transport?: ApiTransport
 }
 
 /**
  * T1.1 — Persistent top-of-page navigation shell.
  * Renders nav links that are only active when the user is authenticated,
- * plus environment badge and logout action.
+ * plus environment badge, session expiry warnings (T2.3), and server logout (T2.4).
  */
-export function AppShell({ config }: AppShellProps) {
-  const { authenticated, info, logout } = useSession()
+export function AppShell({ config, transport = apiTransport }: AppShellProps) {
+  const { authenticated, info, logout, token } = useSession()
   const navigate = useNavigate()
 
-  const handleLogout = (): void => {
-    logout()
-    void navigate('/login')
+  const handleLogout = async (): Promise<void> => {
+    try {
+      if (token) {
+        await transport.request('/auth/logout', {
+          body: {},
+          method: 'POST',
+          token,
+        })
+      }
+    } catch {
+      // Non-fatal if logout endpoint or network fails
+    } finally {
+      logout()
+      void navigate('/login')
+    }
   }
 
   return (
@@ -64,7 +80,9 @@ export function AppShell({ config }: AppShellProps) {
                 <button
                   type="button"
                   className="app-nav__logout"
-                  onClick={handleLogout}
+                  onClick={() => {
+                    void handleLogout()
+                  }}
                 >
                   Sign out
                 </button>
@@ -79,6 +97,8 @@ export function AppShell({ config }: AppShellProps) {
           </div>
         </nav>
       </header>
+
+      <SessionExpiryBanner />
 
       <main id="main-content" tabIndex={-1} aria-label="Page content">
         <Outlet />
