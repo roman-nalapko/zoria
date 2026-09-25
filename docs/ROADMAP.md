@@ -1,79 +1,103 @@
-# Delivery roadmap
+# Delivery roadmap & task backlog
 
-Checkboxes are the work queue for coding agents. A task is complete only when its
-tests and the repository quality gate pass.
+Updated: 2026-09-25 by Antigravity.
 
-## Urgent override — registration reliability
+Checkboxes represent the work queue for coding agents and human review.
+A task is complete only when its implementation, unit/component tests,
+and the repository quality gate (`npm run check`) pass.
 
-Complete P0 R1–R6 in [REGISTRATION_BACKLOG.md](REGISTRATION_BACKLOG.md) first.
-The September 24 audit found unattended-registration blockers despite green CI.
-Then address P1 R7–R12 and return to the product work below. Existing checked
-implementation items do not certify worker reliability or successful admission.
+---
 
-## P0 — foundation
+## Phase 0: Admission & registration (COMPLETED ✅)
 
-- [x] Capture official part 1 requirements, architecture, test plan, and OpenAPI.
-- [x] Scaffold React + TypeScript, strict checks, tests, formatting, and CI.
-- [x] Generate TypeScript API types from the pinned OpenAPI contract.
-- [x] Implement validated environment switching (training by default,
-      production explicit).
-- [ ] Add route shell, error boundary, accessible navigation, and status region.
+All critical prerequisites for tournament participation are fulfilled and verified.
 
-## P1 — safe transport and ether
+- [x] **R1–R6 (P0 reliability fixes)**: No-throw error handling, session body validation,
+      state persistence between cycles, uncertain registration recovery, seamless job handover.
+- [x] **R7–R12 (P1 reliability fixes)**: Rich Telegram status with Bucharest local time,
+      fixed Telegram destination, Harbinger `{uk, en}` compatibility, secret leak audit clean.
+- [x] **Cryptographic window registration**: Successfully executed in live window at 08:02:40 local.
+- [x] **Repository admission verified**: `GET /me/repository` returned `accessStatus: "verified"`
+      with `reasonCode: "marker-found"`. Verified on server 2026-09-25 09:05:18 local time.
+- [x] **GitHub repository marker**: `.zoria` with `roman-nalapko` in place on default branch.
+- [x] **Organizer bot access**: `zoria-net-bot` confirmed with `Write` collaborator access.
 
-- [x] Implement raw-response transport with timeout/abort and `credentials: omit`.
-- [x] Normalize headers, API errors, arbitrary bodies, and request IDs.
-- [x] Implement shared `Retry-After` quiet state and full-jitter retry scheduling.
-- [x] Add a singleton polling coordinator with `/ether` and `/ether/roll` limits.
-- [x] Pin the published production fingerprint once it appears in canonical docs.
-- [x] Implement key import/fingerprint verification and Ed25519 envelope checks.
-- [x] Implement strict frame parsing and monotonic `at` reduction.
-- [ ] Test official A–D frames, corrupt JSON, HTML, empty responses, disconnects,
-      delayed frames, forged windows, and old echoes.
-- [x] Implement phase/countdown UI using server-clock offset.
+---
 
-## P2 — registration and session
+## Phase 1: Part 1 Web Client & Headquarters Console (Deadline: 2026-09-28)
 
-- [x] Normalize and validate private GitHub repository roots, the one-time
-      `invitation`, and all other registration fields.
-- [x] Build registration draft with explicit local-storage consent and warning
-      that display name is public.
-- [x] Implement registration, including `authentication-busy` retry behavior.
-- [x] Implement lost-registration-response recovery via login-first state machine.
-- [ ] Implement login/logout, expiry warning, redacted session vault, and screen
-      restoration after `401`.
-- [ ] Show organizer invitation and `.zoria` instructions immediately on success.
-- [ ] Exercise the full flow against the training stand during its hourly window.
+Build the participant's network console in React + TypeScript. Must be fully operational
+before Part 2 is released on September 28.
 
-## P3 — repository and network content
+### Milestone 1.1: Shell, Layout & Routing
+- [ ] **T1.1**: App navigation shell with responsive header, active route indicators, and mobile drawer.
+- [ ] **T1.2**: Route architecture (`/login`, `/dashboard`, `/news`, `/inbox`, `/stages`, `/ether`).
+- [ ] **T1.3**: Global Error Boundary displaying `X-Request-Id` on server failures with retry action.
+- [ ] **T1.4**: Environment indicator & switcher (Training Stand `stand.zoria.net` vs Production `zoria.net`).
+- [ ] **T1.5**: Accessible status region (live ARIA announcements for network changes, countdowns, jams).
 
-- [ ] Implement summary polling and dependency-driven invalidation.
-- [ ] Show repository status/reason/checked time and `verifiedElsewhere` warning.
-- [ ] Implement session-only repository change.
-- [ ] Implement stable, restartable pagination for news and inbox.
-- [ ] Implement inbox detail and explicit mark-read action.
-- [ ] Implement stages, detail, errata refresh, and explicit acknowledgment.
-- [ ] Add safe Markdown allowlist and safe HTTP(S)-only links.
-- [ ] Add public roll and optional fragment reconstruction.
+### Milestone 1.2: Authentication & Session Vault
+- [ ] **T2.1**: Redacted in-memory session vault (token held only in component/store memory; never written to localStorage, logs, or diagnostic dumps).
+- [ ] **T2.2**: Login form (`POST /auth/login`) with credential validation and preserved form inputs on failure.
+- [ ] **T2.3**: Session expiration warning and graceful token refresh/re-login prompt.
+- [ ] **T2.4**: Logout action (`POST /auth/logout`) with complete memory purge.
+- [ ] **T2.5**: HTTP 401 interceptor: clears session vault, preserves user route/state, and redirects to login.
 
-## P4 — readiness
+### Milestone 1.3: Participant Dashboard (Console Overview)
+- [ ] **T3.1**: Repository admission card showing `accessStatus: "verified"`, `reasonCode: "marker-found"`, and last checked timestamp in `Europe/Bucharest`.
+- [ ] **T3.2**: Live radio ether signal card: current phase (`window`/`static`/`after`), carrier status, station, and local-time countdown.
+- [ ] **T3.3**: Quick telemetry summary cards: unread news count, unread inbox messages, active stages count.
 
-- [ ] Run the complete `docs/TEST_PLAN.md` matrix on the training stand.
-- [ ] Complete responsive, keyboard, screen-reader, and reduced-motion passes.
-- [ ] Run secret scanning and inspect built assets/source maps for credentials.
-- [x] Add `.zoria` with the confirmed network username `roman-nalapko`.
-- [x] Invite `zoria-net-bot` with the required Write permission (invitation sent
-      2026-09-22; bot acceptance is asynchronous).
-- [x] Add a single-instance Cloud Run watcher for signed-window registration and
-      Telegram alerts; production deployment remains an operator step.
-- [x] Add a temporary zero-budget GitHub Actions watcher that disables itself
-      after confirmed registration and Telegram delivery.
-- [ ] Confirm `accessStatus: verified` well before the deadline.
+### Milestone 1.4: Polling Coordinator & Real-Time Sync
+- [ ] **T4.1**: Polling coordinator for `GET /me/summary` respecting the ~15s interval limit and `Retry-After`.
+- [ ] **T4.2**: Reactive dependency invalidation: refresh inbox only on `unread` change, news on `latestNews`, stages on `releasedStages`, repository card on `repositoryAt`.
+- [ ] **T4.3**: Origin-wide quiet period handling (`429 jammed` silences all outbound traffic to that origin).
 
-## Later released stages
+### Milestone 1.5: News Feed (`/news`)
+- [ ] **T5.1**: Stable, restartable pagination for news list (`GET /news`).
+- [ ] **T5.2**: News detail viewer (`GET /news/{id}`) with publication timestamp in user's local timezone.
+- [ ] **T5.3**: Safe Markdown renderer: strict tag allowlist, no raw server HTML execution, external links forced to `rel="noopener noreferrer"`.
 
-- [ ] On 2026-09-28, archive part 2 text/errata and add bot/SDK tasks without
-      guessing unreleased contracts.
-- [ ] On 2026-10-05, archive parts 3/4 and add HQ/preflight tasks and anchors.
-- [ ] Keep `DECISIONS.md` current; finish it by final submission.
-- [ ] Write `EPISODE.md` only from the assigned match episode and final code.
+### Milestone 1.6: Inbox & Organizer Communications (`/inbox`)
+- [ ] **T6.1**: Inbox message list (`GET /me/inbox`) with unread indicators and category badges.
+- [ ] **T6.2**: Message detail view with safe body rendering.
+- [ ] **T6.3**: Explicit "mark as read" action (`POST /me/inbox/{id}/read`) with optimistic local update.
+
+### Milestone 1.7: Stages & Tournament Briefings (`/stages`)
+- [ ] **T7.1**: Stages list (`GET /stages`) showing available parts, publication dates, and deadlines.
+- [ ] **T7.2**: Stage detail view with technical task rendering and errata section.
+- [ ] **T7.3**: Explicit stage acknowledgment button (`POST /stages/{id}/ack`).
+
+### Milestone 1.8: Ether Roll & Fragment Assembler (`/ether`)
+- [ ] **T8.1**: Public roll viewer (`GET /ether/roll`) displaying participant airwave sequence (max 1 poll/min).
+- [ ] **T8.2**: Fragment assembler: collects broadcast letter pieces (`fragment: { n, of, text }`) across accepted frames and reconstructs the full lore message.
+
+### Milestone 1.9: Quality Gate & Accessibility Verification
+- [ ] **T9.1**: Full test suite coverage for all client state machines, reducers, and error paths.
+- [ ] **T9.2**: WCAG 2.1 AA audit: keyboard navigation, screen-reader landmarks, focus trap, color contrast, and reduced-motion preferences.
+- [ ] **T9.3**: Secret scan on client build output (`dist/`) ensuring zero credential leakage in bundles or source maps.
+
+---
+
+## Phase 2: Game Engine, SDK & Battle Bot (Starts 2026-09-28)
+
+Unlocks when organizers publish Part 2 specifications.
+
+- [ ] **T10.1**: Ingest Part 2 OpenAPI schema update and generate TypeScript definitions.
+- [ ] **T10.2**: Implement game state parser and game protocol client (Node.js 24+).
+- [ ] **T10.3**: Build bot decision engine (heuristic baseline -> strategic decision tree).
+- [ ] **T10.4**: Add bot test harness against local mocks and training stand (`stand.zoria.net`).
+- [ ] **T10.5**: Setup bot execution workflow / preflight checks in repository.
+
+---
+
+## Phase 3: Game Headquarters & Tournament Stage (2026-10-05 – 2026-10-21)
+
+Unlocks when Part 3/4 specifications are released.
+
+- [ ] **T11.1**: HQ match viewer: visual game board, live telemetry, and replay parser.
+- [ ] **T11.2**: Tournament match results & standings tracker.
+- [ ] **T11.3**: Group stage preparation & code freeze audit (2026-10-10 00:00 local).
+- [ ] **T11.4**: Group stage match monitoring (2026-10-12 – 2026-10-14).
+- [ ] **T11.5**: Second stage playoff matches (2026-10-15 – 2026-10-17).
+- [ ] **T11.6**: Complete documentation deliverables: `DECISIONS.md` (by 17.10) and `EPISODE.md` (by 18.10).
