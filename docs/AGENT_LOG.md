@@ -215,3 +215,8 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   - Inbox service (`src/inbox/service.ts`) with `GET /inbox`, `GET /inbox/{id}`, and `POST /inbox/{id}/read`.
   - Inbox page (`src/app/InboxPage.tsx`) with unread indicators, repository notice badges, full letter viewer, and optimistic mark-as-read acknowledgment action.
 - Quality Gate: `npm run check` passes completely (30 test files, 133 tests, 0 lint warnings, 0 type errors).
+- Implemented Milestone 1.7 (Tournament Stages `/stages`):
+  - Stages service (`src/stages/service.ts`) with `GET /stages` (`fetchStages`), `GET /stages/{id}` (`fetchStage`), and `POST /stages/{id}/ack` (`acknowledgeStage`).
+  - Stages view (`src/app/StagesPage.tsx`) with released parts master-list, pending/acknowledged pills, full technical specification Markdown body, official errata notices (`errata`, `errataAt`), and immediate acknowledgment action.
+  - Wired into `App.tsx` routing and added dedicated styling in `styles.css`.
+- Quality Gate: `npm run check` and `npm run build` pass completely (32 test files, 138 tests, 0 lint warnings, 0 type errors).

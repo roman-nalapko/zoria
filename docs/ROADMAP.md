@@ -71,9 +71,9 @@ before Part 2 is released on September 28.
 
 ### Milestone 1.7: Stages & Tournament Briefings (`/stages`)
 
-- [ ] **T7.1**: Stages list (`GET /stages`) showing available parts, publication dates, and deadlines.
-- [ ] **T7.2**: Stage detail view with technical task rendering and errata section.
-- [ ] **T7.3**: Explicit stage acknowledgment button (`POST /stages/{id}/ack`).
+- [x] **T7.1**: Stages list (`GET /stages`) showing available parts, publication dates, and deadlines.
+- [x] **T7.2**: Stage detail view with technical task rendering and errata section.
+- [x] **T7.3**: Explicit stage acknowledgment button (`POST /stages/{id}/ack`).
 
 ### Milestone 1.8: Ether Roll & Fragment Assembler (`/ether`)
 

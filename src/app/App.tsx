@@ -7,7 +7,8 @@ import { LoginPage } from './LoginPage'
 import { DashboardPage } from './DashboardPage'
 import { NewsPage } from './NewsPage'
 import { InboxPage } from './InboxPage'
-import { EtherPage, NotFoundPage, StagesPage } from './pages'
+import { StagesPage } from './StagesPage'
+import { EtherPage, NotFoundPage } from './pages'
 import { appConfig, apiTransport } from './runtime'
 import type { AppConfig } from '../config/environment'
 import type { ApiTransport } from '../api/transport'
@@ -57,7 +58,10 @@ export function App({
                   path="/inbox"
                   element={<InboxPage transport={transport} />}
                 />
-                <Route path="/stages" element={<StagesPage />} />
+                <Route
+                  path="/stages"
+                  element={<StagesPage transport={transport} />}
+                />
                 <Route path="/ether" element={<EtherPage />} />
               </Route>
 

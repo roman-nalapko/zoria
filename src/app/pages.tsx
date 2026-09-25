@@ -23,10 +23,6 @@ function Placeholder({
   )
 }
 
-export function StagesPage() {
-  return <Placeholder title="Stages" milestone="Milestone 1.8" />
-}
-
 export function EtherPage() {
   return <Placeholder title="Ether receiver" milestone="Milestone 1.9" />
 }
