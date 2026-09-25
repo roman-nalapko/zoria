@@ -1,0 +1,28 @@
+name: Zoria repository admission check
+
+on: workflow_dispatch
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  check-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      ZORIA_DISPLAY_NAME: Zoria
+      ZORIA_INVITATION: ${{ secrets.ZORIA_INVITATION }}
+      ZORIA_PASSWORD: ${{ secrets.ZORIA_PASSWORD }}
+      ZORIA_REPOSITORY_URL: https://github.com/roman-nalapko/zoria
+      ZORIA_USERNAME: roman-nalapko
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run run:check-admission

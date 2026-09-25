@@ -15,6 +15,7 @@ export interface SafeApiResult {
 export interface RepositoryStatus {
   accessStatus: string | null
   reason: string | null
+  reasonCode: string | null
   checkedAt: string | null
 }
 
@@ -92,6 +93,23 @@ export class ZoriaWorkerClient {
   }
 
   /**
+   * Log in and retrieve the participant repository admission status.
+   * Extracts the bearer token in memory, performs GET /me/repository,
+   * and discards the token. Never logs or persists bearer token.
+   */
+  async checkMyRepository(): Promise<RepositoryStatus | null> {
+    const internal = await this.#request('/auth/login', true, {
+      password: this.#config.password,
+      username: this.#config.username,
+    })
+    if (!internal.ok || !internal.rawBody) return null
+    if (!this.#validateSession(internal.rawBody)) return null
+    const token = this.extractBearerToken(internal.rawBody)
+    if (!token) return null
+    return this.getRepositoryStatus(token)
+  }
+
+  /**
    * Query /me/repository with a confirmed session.
    * Session token must have been confirmed by login/register returning
    * sessionValid=true. We pass the bearer value from environment for
@@ -111,11 +129,16 @@ export class ZoriaWorkerClient {
     try {
       const parsed: unknown = JSON.parse(internal.rawBody)
       if (typeof parsed !== 'object' || parsed === null) return null
-      const obj = parsed as Record<string, unknown>
+      const root = parsed as Record<string, unknown>
+      const obj =
+        typeof root.repository === 'object' && root.repository !== null
+          ? (root.repository as Record<string, unknown>)
+          : root
       return {
         accessStatus:
           typeof obj.accessStatus === 'string' ? obj.accessStatus : null,
         reason: typeof obj.reason === 'string' ? obj.reason : null,
+        reasonCode: typeof obj.reasonCode === 'string' ? obj.reasonCode : null,
         checkedAt: typeof obj.checkedAt === 'string' ? obj.checkedAt : null,
       }
     } catch {
