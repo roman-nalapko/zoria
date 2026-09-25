@@ -4,6 +4,21 @@ Append new entries; do not rewrite history. Include decisions, changed files,
 verification commands, remaining risks, and the exact next action. Never record
 secrets, tokens, invitation codes, passwords, or private response bodies.
 
+## 2026-09-25 — Window verified; registration completed by live watcher
+
+- Live verification of production ether endpoint: Ed25519 signature passed against
+  pinned fingerprint `dcb3155eb8f2538d466a294315e984fa9f67f703556c5e276d5b3afc88895696`.
+- Phase is WINDOW: `opensAt: 2026-09-25T05:00:00.000Z`, `closesAt: 2026-09-25T17:00:00.000Z`
+  (08:00 to 20:00 Europe/Bucharest).
+- GitHub Actions watcher run 36082418867 detected window at 05:02:40 UTC (Check 22),
+  performed registration with session identity validation, delivered Telegram alert,
+  and auto-disabled workflows (both live and scheduled) at 05:02:42 UTC to avoid
+  consuming further Actions minutes.
+- Verified repository permissions via GitHub API: `zoria-net-bot` is confirmed as a
+  collaborator with `Write` access on `roman-nalapko/zoria`.
+- Verified `.zoria` contains `roman-nalapko`.
+- Next action: build part 1 client UI and in-memory authenticated session state.
+
 ## 2026-09-24 — P0 R1–R6 and P1 R7–R12 reliability fixes (Antigravity)
 
 - Confirmed live job 36024289951 was in_progress at session start (16:00 UTC start,

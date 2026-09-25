@@ -1,73 +1,51 @@
 # Current project status
 
-Updated: 2026-09-24 by Antigravity (22:50 UTC+3 = 19:50 UTC).
+Updated: 2026-09-25 by Antigravity (08:58 Europe/Bucharest / 05:58 UTC).
 
 This is the canonical short handoff. Read it before `AGENT_LOG.md`; update both
 after every meaningful implementation session.
 
-## September 24 — P0 + P1 reliability fixes applied
+## September 25 — Window active; registration completed by watcher
 
-All backlog items R1–R12 have been addressed. See `docs/REGISTRATION_BACKLOG.md`
-for the original audit. Changes are committed to `codex/zoria-agent-foundation`
-and must be merged to `main` to take effect in the live watcher.
-
-Live job 36024289951 was still running at audit time (16:00 UTC start). Current
-phase and registration success remain UNCONFIRMED from this session — no verified
-window frame was observed. The watcher must receive a genuine signed `window`
-frame and confirm a valid session for the configured username before reporting
-registration success.
+- **Cryptographically verified window**: Opened at `2026-09-25T05:00:00.000Z`
+  (08:00 Europe/Bucharest); closes at `2026-09-25T17:00:00.000Z` (20:00 Europe/Bucharest).
+  Key fingerprint: `dcb3155eb8f2538d466a294315e984fa9f67f703556c5e276d5b3afc88895696`.
+- **Live watcher execution**:
+  - Run 36082418867 on `main` detected the signed `window` frame at check 22
+    (05:02:40 UTC / 08:02:40 local).
+  - Executed registration/login with session identity validation (`sessionValid: true`).
+  - Sent success notification to Telegram.
+  - Automatically disabled `zoria-watch-live.yml` and `zoria-watch.yml` at 05:02:42 UTC
+    to halt Actions minute consumption.
+  - Job finished with status `success`.
+- **Repository admission status**:
+  - `zoria-net-bot` has accepted the repository invitation and has `Write`
+    collaborator permission on `roman-nalapko/zoria`.
+  - `.zoria` on `main` contains `roman-nalapko`.
+  - Server-side `accessStatus: verified` check deadline is October 5 21:00 UTC.
 
 ## Repository
 
 - GitHub: `https://github.com/roman-nalapko/zoria` (private).
 - Default branch: `main`.
 - Active development branch: `codex/zoria-agent-foundation`.
-- `.zoria`: `roman-nalapko`, present on both branches.
-- `zoria-net-bot`: Write invitation sent on 2026-09-22; acceptance pending.
-- CI: formatting, ESLint, strict TypeScript, Vitest, and production build.
-- Actions quota: unknown. Estimated ~355 min/job; budget for ~5 jobs/month.
+- `.zoria`: `roman-nalapko`.
+- `zoria-net-bot`: Collaborator (Write access confirmed).
+- CI: All tests passing (20 test files / 89 tests).
 
-## Implemented (this session — P0+P1 fixes)
+## Implemented
 
-- **R1** — `once.ts` no longer `throw`s on transient failures; bounded jitter
-  retries for 5xx/transport errors in `retryAuthBusyAndTransient()`.
-- **R2** — `zoria.ts login()` and `register()` validate session body: require
-  non-empty token field and matching username; return `sessionValid: boolean`.
-- **R3** — `state-file.ts` persists `latestFrameAt` and `quietUntil` across
-  `once.js` restarts; applied via `applyState()`/`exportState()`.
-- **R4** — Comprehensive uncertain registration recovery: 409→login, 5xx→login,
-  malformed 200→login-first; only re-register after definitive invalid-credentials.
-- **R5** — Workflow dispatches successor on second-to-last iteration (overlap
-  not gap); `|| true` on `node once.js` prevents shell `-e` exit.
-- **R6** — Budget comment in workflow; `ZORIA_MAX_CHECKS` env supported.
-- **R7** — Rich Telegram messages with frame timestamp, local time (Europe/Bucharest),
-  opensAt countdown; "after" text fixed.
-- **R8** — `telegram.ts` requires fixed `TELEGRAM_CHAT_ID`; auto-discovery removed;
-  `retry_after` parsing; bounded retries; pending success notification queue.
-- **R9** — `zoria.ts getRepositoryStatus()` added; session token threading is
-  noted as a future step (token intentionally excluded from `SafeApiResult`).
-- **R10** — `Harbinger.text` accepts `{uk,en}` (addendum) and `{uk,ru}` (training)
-  via optional keys; R10 robustness tests added (7 new tests).
-- **R11** — Training stand integration test is skip-able (needs env with STAND-2026).
-- **R12** — Git history audited; no real secret values found in source/test files.
-
-## Test suite
-
-`npm run check` passes: **20 test files / 89 tests** (was 14 files / 33 tests).
-New tests cover: session validation (R2), state persistence (R3), Telegram
-retry/chatId/pending (R8), frame robustness/backward-compat (R10).
+- All P0 (R1–R6) and P1 (R7–R12) reliability fixes merged to `main`.
+- Non-secret persistent timing state in `dist-worker/worker-state.json`.
+- Strict session identity verification in `zoria.ts`.
+- Bounded jitter backoff and no-throw error handling in `once.ts`.
+- Fixed Telegram destination, retry_after support, and pending delivery queue.
+- Harmonized `{uk, en}` Harbinger types per September 24 addendum.
+- Overlap successor chaining in GitHub Actions workflow.
 
 ## Immediate next work
 
-1. Merge `codex/zoria-agent-foundation` to `main` and trigger watcher dispatch.
-2. Monitor new job; verify Telegram delivery and registration confirmation.
-3. Implement bearer token threading to complete /me/repository check (R9).
-4. Add in-memory session vault and authenticated screen state.
-5. Show repository invitation/marker instructions after success.
-
-## External blockers
-
-- Registration success requires a cryptographically verified `window` frame;
-  no such frame was observed during this session.
-- Actions quota unknown; monitor at https://github.com/settings/billing.
-- Bot invitation acceptance still pending (sent 2026-09-22).
+1. Confirm Telegram delivery in user's Telegram chat.
+2. Build authenticated in-memory session vault and UI routes for Part 1 client.
+3. Add repository status poller (`/me/repository`) to track `accessStatus: verified`.
+4. Summary, news, inbox and released-stage polling.
