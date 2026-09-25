@@ -21,7 +21,7 @@ export interface ParticipantDashboardState {
 export function useParticipantDashboard(
   transport: ApiTransport,
   coordinator: PollingCoordinator = pollingCoordinator,
-  pollIntervalMs = 60_000,
+  pollIntervalMs = 15_000,
 ): ParticipantDashboardState {
   const { authenticated, token } = useSession()
   const [summary, setSummary] = useState<Summary | null>(null)

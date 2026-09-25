@@ -46,7 +46,7 @@ export interface DashboardPageProps {
  * - T3.2: Quick links to private GitHub repository with verified status indicator.
  * - T3.3: Ether receiver status card (current phase, harbinger countdown, key fingerprint).
  * - T3.4: Participant summary overview: unread news, inbox count, released stages.
- * - T3.5: Polling integration: automatic background polling (60s) with visibility gating.
+ * - T3.5: Polling integration: automatic background polling (~15s) with visibility gating.
  */
 export function DashboardPage({
   controller = etherController,

@@ -235,3 +235,6 @@ secrets, tokens, invitation codes, passwords, or private response bodies.
   - Lightweight GitHub Actions cron running every 4 hours or manually via `workflow_dispatch`.
   - Authenticates securely in-memory, polls `/me/summary`, and delivers Telegram alerts whenever unread letters, newly released stages, errata, or repository review changes appear.
   - Zero compute waste (~15s per run), keeps participant fully informed before Part 2 release without manual checking.
+- Aligned participant polling and alert details with official organizer announcement:
+  - Adjusted `useParticipantDashboard` default poll interval to 15_000 ms (~15s rate limit per API spec).
+  - Enhanced Telegram digest to inspect `/inbox` and include unread letter titles directly in the push alert.

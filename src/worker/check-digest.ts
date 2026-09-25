@@ -50,6 +50,22 @@ async function main(): Promise<void> {
 
   let msg = `🔔 Zoria tournament digest (${now} ${tz}):\n`
   msg += `• Листів у скриньці: ${summary.unread.toString()} непрочитаних\n`
+
+  if (hasUnread) {
+    try {
+      const inbox = await zoria.checkMyInbox()
+      const unreadList = inbox?.filter((m) => m.readAt === null) ?? []
+      if (unreadList.length > 0) {
+        msg += '  Заголовки непрочитаних:\n'
+        for (const item of unreadList.slice(0, 3)) {
+          msg += `  - «${item.title}»\n`
+        }
+      }
+    } catch {
+      // Non-fatal
+    }
+  }
+
   msg += `• Турнірні етапи: ${summary.acknowledgedStages.toString()} / ${summary.releasedStages.toString()} підтверджено\n`
   if (summary.latestNews) {
     msg += `• Останні новини: ${summary.latestNews}\n`

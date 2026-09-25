@@ -205,6 +205,83 @@ export class ZoriaWorkerClient {
     }
   }
 
+  /**
+   * Log in and retrieve the participant inbox messages (/inbox).
+   * Extracts bearer token in memory, performs GET /inbox, and discards token.
+   */
+  async checkMyInbox(): Promise<Array<{
+    id: string
+    title: string
+    readAt: string | null
+    createdAt: string
+  }> | null> {
+    const internal = await this.#request('/auth/login', true, {
+      password: this.#config.password,
+      username: this.#config.username,
+    })
+    if (!internal.ok || !internal.rawBody) return null
+    if (!this.#validateSession(internal.rawBody)) return null
+    const token = this.extractBearerToken(internal.rawBody)
+    if (!token) return null
+    return this.getInbox(token)
+  }
+
+  /**
+   * Query /inbox with a confirmed session.
+   */
+  async getInbox(bearerToken: string): Promise<Array<{
+    id: string
+    title: string
+    readAt: string | null
+    createdAt: string
+  }> | null> {
+    if (!bearerToken) return null
+    const internal = await this.#requestWithBearer('/inbox', bearerToken)
+    if (!internal.ok || internal.rawBody === null) return null
+    try {
+      const parsed: unknown = JSON.parse(internal.rawBody)
+      if (typeof parsed !== 'object' || parsed === null) return null
+      const obj = parsed as Record<string, unknown>
+      const items = Array.isArray(obj.items) ? obj.items : []
+      return items.map((item: Record<string, unknown>) => ({
+        createdAt: typeof item.createdAt === 'string' ? item.createdAt : '',
+        id: typeof item.id === 'string' ? item.id : '',
+        readAt: typeof item.readAt === 'string' ? item.readAt : null,
+        title: typeof item.title === 'string' ? item.title : '',
+      }))
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Acknowledge letter receipt: POST /inbox/{id}/read
+   */
+  async markMessageRead(
+    bearerToken: string,
+    messageId: string,
+  ): Promise<boolean> {
+    if (!bearerToken || !messageId) return false
+    try {
+      const response = await fetch(
+        `${this.#config.apiUrl}/inbox/${encodeURIComponent(messageId)}/read`,
+        {
+          body: JSON.stringify({}),
+          credentials: 'omit',
+          headers: {
+            authorization: `Bearer ${bearerToken}`,
+            'content-type': 'application/json',
+          },
+          method: 'POST',
+          signal: AbortSignal.timeout(10_000),
+        },
+      )
+      return response.ok
+    } catch {
+      return false
+    }
+  }
+
   async #loadKey(): Promise<EtherKey | null> {
     const response = await this.#request('/ether/key', false)
     if (!response.ok || response.rawBody === null) return null
