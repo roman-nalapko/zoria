@@ -255,6 +255,20 @@ export class ZoriaWorkerClient {
   }
 
   /**
+   * Log in and retrieve the in-memory bearer token for this cycle.
+   * Returns null if login fails or session is invalid.
+   */
+  async obtainSessionToken(): Promise<string | null> {
+    const internal = await this.#request('/auth/login', true, {
+      password: this.#config.password,
+      username: this.#config.username,
+    })
+    if (!internal.ok || !internal.rawBody) return null
+    if (!this.#validateSession(internal.rawBody)) return null
+    return this.extractBearerToken(internal.rawBody)
+  }
+
+  /**
    * Acknowledge letter receipt: POST /inbox/{id}/read
    */
   async markMessageRead(
@@ -265,6 +279,93 @@ export class ZoriaWorkerClient {
     try {
       const response = await fetch(
         `${this.#config.apiUrl}/inbox/${encodeURIComponent(messageId)}/read`,
+        {
+          body: JSON.stringify({}),
+          credentials: 'omit',
+          headers: {
+            authorization: `Bearer ${bearerToken}`,
+            'content-type': 'application/json',
+          },
+          method: 'POST',
+          signal: AbortSignal.timeout(10_000),
+        },
+      )
+      return response.ok
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Retrieve single inbox message details.
+   */
+  async getMessage(
+    bearerToken: string,
+    messageId: string,
+  ): Promise<{
+    id: string
+    title: string
+    body: string
+    createdAt: string
+    readAt: string | null
+  } | null> {
+    if (!bearerToken || !messageId) return null
+    const internal = await this.#requestWithBearer(
+      `/inbox/${encodeURIComponent(messageId)}`,
+      bearerToken,
+    )
+    if (!internal.ok || internal.rawBody === null) return null
+    try {
+      const parsed = JSON.parse(internal.rawBody) as Record<string, unknown>
+      const msg = parsed.message as Record<string, unknown> | undefined
+      if (!msg) return null
+      return {
+        body: typeof msg.body === 'string' ? msg.body : '',
+        createdAt: typeof msg.createdAt === 'string' ? msg.createdAt : '',
+        id: typeof msg.id === 'string' ? msg.id : messageId,
+        readAt: typeof msg.readAt === 'string' ? msg.readAt : null,
+        title: typeof msg.title === 'string' ? msg.title : '',
+      }
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Retrieve released stages.
+   */
+  async getStages(bearerToken: string): Promise<Array<{
+    id: string
+    title: string
+    releasedAt: string
+    acknowledgedAt: string | null
+  }> | null> {
+    if (!bearerToken) return null
+    const internal = await this.#requestWithBearer('/stages', bearerToken)
+    if (!internal.ok || internal.rawBody === null) return null
+    try {
+      const parsed = JSON.parse(internal.rawBody) as Record<string, unknown>
+      const items = Array.isArray(parsed.items) ? parsed.items : []
+      return items.map((item: Record<string, unknown>) => ({
+        acknowledgedAt:
+          typeof item.acknowledgedAt === 'string' ? item.acknowledgedAt : null,
+        id: typeof item.id === 'string' ? item.id : '',
+        releasedAt: typeof item.releasedAt === 'string' ? item.releasedAt : '',
+        title: typeof item.title === 'string' ? item.title : '',
+      }))
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Acknowledge stage: POST /stages/{id}/ack
+   */
+  async ackStage(bearerToken: string, stageId: string): Promise<boolean> {
+    if (!bearerToken || !stageId) return false
+    try {
+      const response = await fetch(
+        `${this.#config.apiUrl}/stages/${encodeURIComponent(stageId)}/ack`,
         {
           body: JSON.stringify({}),
           credentials: 'omit',

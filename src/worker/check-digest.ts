@@ -23,7 +23,13 @@ async function main(): Promise<void> {
   console.log(
     'Checking tournament updates via /me/summary and /me/repository...',
   )
-  const summary = await zoria.checkMySummary()
+  const token = await zoria.obtainSessionToken()
+  if (!token) {
+    console.log(JSON.stringify({ event: 'auth-failed' }))
+    return
+  }
+
+  const summary = await zoria.getSummary(token)
 
   const tz = 'Europe/Bucharest'
   const now = new Date().toLocaleString('uk-UA', { timeZone: tz })
@@ -35,16 +41,15 @@ async function main(): Promise<void> {
 
   console.log(
     JSON.stringify({
-      event: 'summary-checked',
-      unread: summary.unread,
-      releasedStages: summary.releasedStages,
       acknowledgedStages: summary.acknowledgedStages,
+      event: 'summary-checked',
       latestNews: summary.latestNews,
+      releasedStages: summary.releasedStages,
       repositoryAt: summary.repositoryAt,
+      unread: summary.unread,
     }),
   )
 
-  // Notify if there are unread inbox items, unacknowledged stages, or new news
   const hasUnread = summary.unread > 0
   const hasPendingStages = summary.releasedStages > summary.acknowledgedStages
 
@@ -53,12 +58,21 @@ async function main(): Promise<void> {
 
   if (hasUnread) {
     try {
-      const inbox = await zoria.checkMyInbox()
+      const inbox = await zoria.getInbox(token)
       const unreadList = inbox?.filter((m) => m.readAt === null) ?? []
       if (unreadList.length > 0) {
-        msg += '  Заголовки непрочитаних:\n'
-        for (const item of unreadList.slice(0, 3)) {
-          msg += `  - «${item.title}»\n`
+        msg += '\n📬 НОВІ ПОВІДОМЛЕННЯ В СКРИНЬЦІ:\n'
+        for (const item of unreadList) {
+          const details = await zoria.getMessage(token, item.id)
+          msg += `\n✉️ «${item.title}»\n`
+          if (details?.body) {
+            msg += `${details.body.trim()}\n`
+          }
+          // Automatically mark read so organizers see participant receipt
+          const marked = await zoria.markMessageRead(token, item.id)
+          if (marked) {
+            msg += `(позначено прочитаним ✅)\n`
+          }
         }
       }
     } catch {
@@ -66,7 +80,28 @@ async function main(): Promise<void> {
     }
   }
 
-  msg += `• Турнірні етапи: ${summary.acknowledgedStages.toString()} / ${summary.releasedStages.toString()} підтверджено\n`
+  msg += `\n• Турнірні етапи: ${summary.acknowledgedStages.toString()} / ${summary.releasedStages.toString()} підтверджено\n`
+
+  if (hasPendingStages) {
+    try {
+      const stages = await zoria.getStages(token)
+      const unackedStages =
+        stages?.filter((s) => s.acknowledgedAt === null) ?? []
+      if (unackedStages.length > 0) {
+        msg += '\n🏆 НОВІ ТУРНІРНІ ЕТАПИ (ЧАСТИНА ЗАВДАННЯ):\n'
+        for (const st of unackedStages) {
+          msg += `• ${st.title} (ID: ${st.id})\n`
+          const acked = await zoria.ackStage(token, st.id)
+          if (acked) {
+            msg += `  (отримання підтверджено сервером ✅)\n`
+          }
+        }
+      }
+    } catch {
+      // Non-fatal
+    }
+  }
+
   if (summary.latestNews) {
     msg += `• Останні новини: ${summary.latestNews}\n`
   }
@@ -74,14 +109,8 @@ async function main(): Promise<void> {
     msg += `• Зміна статусу репозиторію: ${summary.repositoryAt}\n`
   }
 
-  // If there's an action item, send the alert
-  if (hasUnread || hasPendingStages) {
-    msg +=
-      '\n👉 Перевірте клієнт: є нові вхідні повідомлення або етапи для підтвердження!'
-  }
-
   const delivered = await telegram.send(msg)
-  console.log(JSON.stringify({ event: 'telegram-digest-sent', delivered }))
+  console.log(JSON.stringify({ delivered, event: 'telegram-digest-sent' }))
 }
 
 await main()
