@@ -145,7 +145,7 @@ async function registerDuringWindow(
 
   if (login.ok && login.sessionValid) {
     // Account exists and credentials work — extract token for /me/repository.
-    const repoStatus = checkRepositoryStatus(login)
+    const repoStatus = await checkRepositoryStatus()
     await telegram.sendSuccess(
       `✅ Zoria: вікно підтверджено криптографічно (${frameLocal} ${tz}). ` +
         `Акаунт вже зареєстровано, вхід підтверджено (перевірка: ${checkLocal}). ` +
@@ -182,7 +182,7 @@ async function registerDuringWindow(
   const registration = await retryAuthBusyAndTransient(() => zoria.register())
 
   if (registration.ok && registration.sessionValid) {
-    const repoStatus = checkRepositoryStatus(registration)
+    const repoStatus = await checkRepositoryStatus()
     await telegram.sendSuccess(
       `🌅 Zoria: вікно підтверджено криптографічно (${frameLocal} ${tz}). ` +
         `Реєстрацію успішно завершено (${checkLocal}). ` +
@@ -197,7 +197,7 @@ async function registerDuringWindow(
     // HTTP 200 but body has no valid session — R4: uncertain, try login.
     const recovery = await retryAuthBusyAndTransient(() => zoria.login())
     if (recovery.ok && recovery.sessionValid) {
-      const repoStatus = checkRepositoryStatus(recovery)
+      const repoStatus = await checkRepositoryStatus()
       await telegram.sendSuccess(
         `✅ Zoria: реєстрація підтверджена після відновлення з'єднання (${checkLocal}). ` +
           repoStatus,
@@ -219,7 +219,7 @@ async function registerDuringWindow(
     // R4: 409 Conflict — account already exists, try login.
     const recovery = await retryAuthBusyAndTransient(() => zoria.login())
     if (recovery.ok && recovery.sessionValid) {
-      const repoStatus = checkRepositoryStatus(recovery)
+      const repoStatus = await checkRepositoryStatus()
       await telegram.sendSuccess(
         `✅ Zoria: акаунт вже існує (409). Вхід підтверджено (${checkLocal}). ` +
           repoStatus,
@@ -238,7 +238,7 @@ async function registerDuringWindow(
     // R4: Transport error or 5xx — R1: do not throw, try login recovery.
     const recovery = await retryAuthBusyAndTransient(() => zoria.login())
     if (recovery.ok && recovery.sessionValid) {
-      const repoStatus = checkRepositoryStatus(recovery)
+      const repoStatus = await checkRepositoryStatus()
       await telegram.sendSuccess(
         `✅ Zoria: реєстрація підтверджена після відновлення (${checkLocal}). ` +
           repoStatus,
@@ -262,20 +262,20 @@ async function registerDuringWindow(
 
 // ── Repository status check (R9) ─────────────────────────────────────────────
 
-function checkRepositoryStatus(loginResult: SafeApiResult): string {
-  // We need the bearer token but must not log it.
-  // The token is extracted from an in-memory result that was not logged.
-  // We perform validation inline here; if unavailable, report that.
-  if (!loginResult.sessionValid) return ''
-
-  // We can only get the bearer token if zoria.ts exposes an extraction method.
-  // For now, report that session was validated but bearer is not available in
-  // the public SafeApiResult (it is intentionally excluded for safety).
-  // A follow-up implementation can thread the token through an opaque handle.
-  return (
-    'Статус репозиторію: перевірку /me/repository буде виконано окремим викликом ' +
-    '(токен не передається між функціями для безпеки).'
-  )
+async function checkRepositoryStatus(): Promise<string> {
+  try {
+    const repo = await zoria.checkMyRepository()
+    if (!repo) {
+      return 'Статус репозиторію: перевірка /me/repository не повернула даних.'
+    }
+    const status = repo.accessStatus ?? 'невідомо'
+    const reason = repo.reason ? ` (${repo.reason})` : ''
+    const reasonCode = repo.reasonCode ? ` [${repo.reasonCode}]` : ''
+    const checked = repo.checkedAt ? `, перевірено: ${repo.checkedAt}` : ''
+    return `Статус репозиторію: ${status}${reasonCode}${reason}${checked}.`
+  } catch {
+    return 'Статус репозиторію: помилка запиту /me/repository.'
+  }
 }
 
 // ── Retry helpers (R1) ────────────────────────────────────────────────────────
