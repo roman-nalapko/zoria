@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InboxPage } from './InboxPage'
 import { SessionProvider } from './SessionContext'
@@ -130,7 +130,7 @@ describe('InboxPage', () => {
     })
 
     const markBtn = screen.getByRole('button', { name: /mark as read/i })
-    markBtn.click()
+    fireEvent.click(markBtn)
 
     await vi.waitFor(() => {
       expect(requestMock).toHaveBeenCalledWith(
