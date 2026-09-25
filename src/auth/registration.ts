@@ -36,7 +36,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function parseSession(body: string): ParticipantSession | null {
+export function parseParticipantSession(
+  body: string,
+): ParticipantSession | null {
   try {
     const value: unknown = JSON.parse(body)
     if (
@@ -126,7 +128,7 @@ export class RegistrationService {
       method: 'POST',
     })
     if (response.ok) {
-      const session = parseSession(response.body)
+      const session = parseParticipantSession(response.body)
       return session
         ? { kind: 'success', recovered: false, session }
         : {
@@ -170,7 +172,7 @@ export class RegistrationService {
     }
 
     if (login.ok) {
-      const session = parseSession(login.body)
+      const session = parseParticipantSession(login.body)
       return session
         ? { kind: 'success', recovered: true, session }
         : {

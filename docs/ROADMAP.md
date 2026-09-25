@@ -30,6 +30,7 @@ Build the participant's network console in React + TypeScript. Must be fully ope
 before Part 2 is released on September 28.
 
 ### Milestone 1.1: Shell, Layout & Routing
+
 - [ ] **T1.1**: App navigation shell with responsive header, active route indicators, and mobile drawer.
 - [ ] **T1.2**: Route architecture (`/login`, `/dashboard`, `/news`, `/inbox`, `/stages`, `/ether`).
 - [ ] **T1.3**: Global Error Boundary displaying `X-Request-Id` on server failures with retry action.
@@ -37,6 +38,7 @@ before Part 2 is released on September 28.
 - [ ] **T1.5**: Accessible status region (live ARIA announcements for network changes, countdowns, jams).
 
 ### Milestone 1.2: Authentication & Session Vault
+
 - [ ] **T2.1**: Redacted in-memory session vault (token held only in component/store memory; never written to localStorage, logs, or diagnostic dumps).
 - [ ] **T2.2**: Login form (`POST /auth/login`) with credential validation and preserved form inputs on failure.
 - [ ] **T2.3**: Session expiration warning and graceful token refresh/re-login prompt.
@@ -44,35 +46,42 @@ before Part 2 is released on September 28.
 - [ ] **T2.5**: HTTP 401 interceptor: clears session vault, preserves user route/state, and redirects to login.
 
 ### Milestone 1.3: Participant Dashboard (Console Overview)
+
 - [ ] **T3.1**: Repository admission card showing `accessStatus: "verified"`, `reasonCode: "marker-found"`, and last checked timestamp in `Europe/Bucharest`.
 - [ ] **T3.2**: Live radio ether signal card: current phase (`window`/`static`/`after`), carrier status, station, and local-time countdown.
 - [ ] **T3.3**: Quick telemetry summary cards: unread news count, unread inbox messages, active stages count.
 
 ### Milestone 1.4: Polling Coordinator & Real-Time Sync
+
 - [ ] **T4.1**: Polling coordinator for `GET /me/summary` respecting the ~15s interval limit and `Retry-After`.
 - [ ] **T4.2**: Reactive dependency invalidation: refresh inbox only on `unread` change, news on `latestNews`, stages on `releasedStages`, repository card on `repositoryAt`.
 - [ ] **T4.3**: Origin-wide quiet period handling (`429 jammed` silences all outbound traffic to that origin).
 
 ### Milestone 1.5: News Feed (`/news`)
+
 - [ ] **T5.1**: Stable, restartable pagination for news list (`GET /news`).
 - [ ] **T5.2**: News detail viewer (`GET /news/{id}`) with publication timestamp in user's local timezone.
 - [ ] **T5.3**: Safe Markdown renderer: strict tag allowlist, no raw server HTML execution, external links forced to `rel="noopener noreferrer"`.
 
 ### Milestone 1.6: Inbox & Organizer Communications (`/inbox`)
+
 - [ ] **T6.1**: Inbox message list (`GET /me/inbox`) with unread indicators and category badges.
 - [ ] **T6.2**: Message detail view with safe body rendering.
 - [ ] **T6.3**: Explicit "mark as read" action (`POST /me/inbox/{id}/read`) with optimistic local update.
 
 ### Milestone 1.7: Stages & Tournament Briefings (`/stages`)
+
 - [ ] **T7.1**: Stages list (`GET /stages`) showing available parts, publication dates, and deadlines.
 - [ ] **T7.2**: Stage detail view with technical task rendering and errata section.
 - [ ] **T7.3**: Explicit stage acknowledgment button (`POST /stages/{id}/ack`).
 
 ### Milestone 1.8: Ether Roll & Fragment Assembler (`/ether`)
+
 - [ ] **T8.1**: Public roll viewer (`GET /ether/roll`) displaying participant airwave sequence (max 1 poll/min).
 - [ ] **T8.2**: Fragment assembler: collects broadcast letter pieces (`fragment: { n, of, text }`) across accepted frames and reconstructs the full lore message.
 
 ### Milestone 1.9: Quality Gate & Accessibility Verification
+
 - [ ] **T9.1**: Full test suite coverage for all client state machines, reducers, and error paths.
 - [ ] **T9.2**: WCAG 2.1 AA audit: keyboard navigation, screen-reader landmarks, focus trap, color contrast, and reduced-motion preferences.
 - [ ] **T9.3**: Secret scan on client build output (`dist/`) ensuring zero credential leakage in bundles or source maps.

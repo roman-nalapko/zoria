@@ -1,11 +1,13 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { MemoryRouter } from 'react-router-dom'
 import {
   API_ORIGINS,
   TRAINING_ETHER_KEY_FINGERPRINT,
 } from '../config/environment'
-import type { EtherFrame } from '../ether/verifier'
-import { AppView } from './App'
+import { SessionProvider } from './SessionContext'
+import { AppShell } from './AppShell'
+import { _resetVaultForTest, setSession } from '../auth/session-vault'
 
 const config = {
   apiUrl: API_ORIGINS.training,
@@ -13,65 +15,61 @@ const config = {
   etherKeyFingerprint: TRAINING_ETHER_KEY_FINGERPRINT,
 }
 
-const frame: EtherFrame = {
-  at: '2026-09-24T03:00:00.000Z',
-  fragment: null,
-  harbinger: { opensIn: 3600, text: { uk: 'signal', en: 'signal' } },
-  kind: 'signal',
-  onAir: 7,
-  phase: 'static',
-  station: 'zoria',
-  v: 1,
-  window: null,
+function renderShell(initialPath = '/login') {
+  return render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <SessionProvider>
+        <AppShell config={config} />
+      </SessionProvider>
+    </MemoryRouter>,
+  )
 }
 
-describe('App', () => {
-  it('shows the safe training environment before a signal arrives', () => {
-    render(
-      <AppView
-        config={config}
-        nowMs={0}
-        snapshot={{
-          consecutiveFailures: 0,
-          frame: null,
-          keyFingerprint: null,
-          lastCheckedAt: null,
-          message: null,
-          nextPollAt: null,
-          receivedAt: null,
-          status: 'idle',
-        }}
-      />,
-    )
-    expect(
-      screen.getByRole('heading', { name: /ready to establish contact/i }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('training')).toBeInTheDocument()
-    expect(screen.getByText(API_ORIGINS.training)).toBeInTheDocument()
+afterEach(() => {
+  cleanup()
+  _resetVaultForTest()
+})
+
+beforeEach(() => {
+  _resetVaultForTest()
+})
+
+describe('AppShell', () => {
+  it('shows Sign in link when unauthenticated', () => {
+    renderShell()
+    expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument()
   })
 
-  it('renders a verified phase and server-adjusted countdown', () => {
-    const receivedAt = Date.parse(frame.at) - 5000
-    render(
-      <AppView
-        config={config}
-        nowMs={receivedAt}
-        snapshot={{
-          consecutiveFailures: 0,
-          frame,
-          keyFingerprint: TRAINING_ETHER_KEY_FINGERPRINT,
-          lastCheckedAt: receivedAt,
-          message: null,
-          nextPollAt: null,
-          receivedAt,
-          status: 'signal',
-        }}
-      />,
-    )
+  it('shows brand link', () => {
+    renderShell()
     expect(
-      screen.getByRole('heading', { name: /verified signal/i }),
+      screen.getByRole('link', { name: /zoria home/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('static')).toBeInTheDocument()
-    expect(screen.getByText('01:00:00')).toBeInTheDocument()
+  })
+
+  it('shows training environment badge', () => {
+    renderShell()
+    expect(screen.getByText('training')).toBeInTheDocument()
+  })
+
+  it('does not show nav links when unauthenticated', () => {
+    renderShell()
+    expect(screen.queryByRole('link', { name: /dashboard/i })).toBeNull()
+    expect(screen.queryByRole('link', { name: /news/i })).toBeNull()
+  })
+
+  it('shows nav links when authenticated', () => {
+    setSession('tok', {
+      sessionId: 's1',
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      username: 'roman-nalapko',
+      displayName: 'Roman',
+    })
+    renderShell('/dashboard')
+    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /news/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /sign out/i }),
+    ).toBeInTheDocument()
   })
 })
