@@ -92,15 +92,28 @@ export class DrawPrng {
 }
 
 /**
+ * A.1: Order by Unicode code points, not by UTF-16 code units
+ */
+export function byCodePoint(a: string, b: string): number {
+  // eslint-disable-next-line @typescript-eslint/no-misused-spread
+  const x = [...a]
+  // eslint-disable-next-line @typescript-eslint/no-misused-spread
+  const y = [...b]
+  for (let i = 0; i < Math.min(x.length, y.length); i++) {
+    const d = (x[i]?.codePointAt(0) ?? 0) - (y[i]?.codePointAt(0) ?? 0)
+    if (d !== 0) return d
+  }
+  return x.length - y.length
+}
+
+/**
  * A.1 & A.4: Perform verifiable draw permutation on participant logins.
  */
 export function shuffleParticipants(logins: string[], salt: string): string[] {
-  // A.1: Sort Unicode code points
-  const arr = [...logins].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
-  const prng = new DrawPrng(salt)
+  const arr = [...logins].sort(byCodePoint)
+  const prng = new DrawPrng(salt + '\0split')
 
-  // A.4: Fisher-Yates in-place from N-1 down to 1
-  for (let i = arr.length - 1; i >= 1; i--) {
+  for (let i = arr.length - 1; i > 0; i--) {
     const j = prng.nextInt(i + 1)
     const temp = arr[i]
     arr[i] = arr[j]
