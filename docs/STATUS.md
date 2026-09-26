@@ -1,36 +1,39 @@
 # Current project status
 
-Updated: 2026-09-25 by Antigravity (16:50 Europe/Bucharest / 13:50 UTC).
+Updated: 2026-09-26 by Antigravity (13:30 Europe/Bucharest / 10:30 UTC).
 
 This is the canonical short handoff. Read it before `AGENT_LOG.md`; update both
 after every meaningful implementation session.
 
+---
+
+## 🏆 Primary Tournament Objective: TOP-3 Podium Finish
+
+- **Target**: Finish in the top 3 of the 2026 Zoria tournament (prize-winning podium).
+- **Competitive landscape**: Exactly **75 participants** registered in the window (vs 482 projected by organizers), with ~50–60 active participants expected for group stages after admission deadlines.
+- **Three-Pillar Strategy**:
+  1. **Group Stage Dominance (12–14 Oct)**: Win our group (7–9 participants per group) to secure direct entry into the 2nd stage playoff (Top 8–10 finalists).
+  2. **Bot Intelligence & Resilience (Part 2, 28 Sept – 10 Oct)**: Build deterministic game simulator, comprehensive decision tree heuristics, and full resilience against Level 1–3 provocateurs (`zaria-kit pack --provoke`).
+  3. **Engineering Excellence & Scoring Maximization**: 100% adherence to quality gates, complete test coverage, perfect `DECISIONS.md`, and rigorous `EPISODE.md` game analysis.
+
+---
+
+## September 26 — Verifiable Draw COMPLETE (100% Verified ✅)
+
+- **Official Draw Execution**: Conducted 2026-09-26 12:00 local time.
+  - drand quicknet beacon round `32535412` (randomness: `7ca7fa4a...`).
+  - Secret revealed: `4e8f053f...`, matches 21.09 commitment `49f5304d...`.
+  - Salt derived: `f0601c79...`.
+  - Cryptographic verification via `src/worker/draw.ts`: **100% match with official `draw.json`**.
+- **Participant Position**: `roman-nalapko` placed at **index 61 out of 75** in the draw permutation.
+- **Group Allocation**: Group slicing will occur on 2026-10-11 09:00 following admission and preflight cutoffs.
+
 ## September 25 — Phase 0 & Phase 1 100% COMPLETE ✅
 
-- **Cryptographically verified window**: Opened at `2026-09-25T05:00:00.000Z`
-  (08:00 Europe/Bucharest); closes at `2026-09-25T17:00:00.000Z` (20:00 Europe/Bucharest).
-  Key fingerprint: `dcb3155eb8f2538d466a294315e984fa9f67f703556c5e276d5b3afc88895696`.
-- **Repository admission status (CONFIRMED VERIFIED)**:
-  - `accessStatus: "verified"`, `reasonCode: "marker-found"`.
-  - Confirmed via authenticated `GET /me/repository`.
-  - `zoria-net-bot` is confirmed as a `Write` collaborator on `roman-nalapko/zoria`.
-  - `.zoria` contains `roman-nalapko`.
-  - Official admission deadline of October 5 is fully met and verified.
-- **Participant Inbox Acknowledged**:
-  - Official confirmation notice received and marked read via `POST /inbox/{id}/read` (200 OK).
-  - Unread letter count is `0`.
-- **Part 1 Client Complete (Milestones 1.1–1.9)**:
-  - Shell, responsive navigation, and accessible live ARIA announcer.
-  - In-memory credential vault (`SessionContext`, `session-vault.ts`).
-  - Participant Dashboard with 15s summary polling and reactive invalidation.
-  - News Feed with pagination and safe Markdown rendering.
-  - Inbox with message inspection and optimistic read acknowledgment.
-  - Stages viewer with errata tracking and acknowledgment.
-  - Ether receiver, countdown clock, public roll viewer, and fragment assembler.
-  - Quality Gate: 31 test files, 120 tests (100% passing), 0 lint errors, strict typecheck clean.
-- **Automated Telegram Monitoring**:
-  - `zoria-check-digest.yml` active in GitHub Actions, scheduled every 4 hours.
-  - Reports summary counters, unread message titles, news timestamps, and repository status.
+- **Repository admission status**: `accessStatus: "verified"`, `reasonCode: "marker-found"`.
+- **Participant Inbox Acknowledged**: Unread count `0`, read receipts verified on server.
+- **Quality Gate**: 32 test files, 124 tests (100% passing), 0 lint errors, strict typecheck clean.
+- **Automated Telegram Monitoring**: `zoria-check-digest.yml` active in GitHub Actions, runs every 2 hours with full letter extraction and auto-acknowledgment.
 
 ## Repository
 
@@ -42,7 +45,12 @@ after every meaningful implementation session.
 
 ## Upcoming Tournament Milestones
 
-1. **2026-09-26 12:00 (Europe/Bucharest)**: Verifiable Draw (drand beacon + participant permutation).
-2. **2026-09-28**: Release of **Part 2** (Game engine, SDK, tournament bot protocol).
+1. **2026-09-28**: Release of **Part 2** (Game engine, SDK, tournament bot protocol).
    - Ingest OpenAPI updates from `/stages`.
    - Implement bot decision engine and local test harness.
+2. **2026-10-05**: Release of **Parts 3 & 4** (Game Headquarters & Provocateur).
+3. **2026-10-06 00:00 local (2026-10-05 21:00 UTC)**: Repository admission deadline (already verified ✅).
+4. **2026-10-10 00:00 local**: Group-stage code freeze.
+5. **2026-10-12 – 2026-10-14**: Group Stage matches.
+6. **2026-10-15 – 2026-10-17**: Second Stage playoff evenings.
+7. **2026-10-21**: Final tournament results & awards ceremony.

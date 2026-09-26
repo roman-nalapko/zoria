@@ -1,10 +1,12 @@
 # Delivery roadmap & task backlog
 
-Updated: 2026-09-25 by Antigravity.
+Updated: 2026-09-26 by Antigravity.
 
-Checkboxes represent the work queue for coding agents and human review.
-A task is complete only when its implementation, unit/component tests,
-and the repository quality gate (`npm run check`) pass.
+## 🎯 Tournament Mission & Goal: Top-3 Finish 🏆
+
+- **Target**: Finish on the tournament podium (Top-3) in Zoria 2026.
+- **Season Field**: 75 registered participants (draw executed 26.09, `roman-nalapko` seed #61).
+- **Core Strategy**: Win the Group Stage (12–14 Oct) -> Advance to 2nd Stage Playoffs (15–17 Oct) -> Pass Guardian's Technical Audit (19–20 Oct).
 
 ---
 
