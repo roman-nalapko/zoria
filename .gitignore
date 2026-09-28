@@ -10,3 +10,6 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 .vite/
+bot/node_modules/
+bot/dist/
+bot/records/
