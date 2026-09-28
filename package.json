@@ -22,7 +22,10 @@
     "test:watch": "vitest",
     "generate:api": "openapi-typescript docs/api/part1.openapi.yaml -o src/api/schema.d.ts",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run build:worker && npm run test",
-    "start:worker": "node dist-worker/worker/main.js"
+    "start:worker": "node dist-worker/worker/main.js",
+    "bot:build": "npm --prefix bot run build",
+    "bot:play": "npm --prefix bot run play -- --fast",
+    "bot:check": "npm --prefix bot run check"
   },
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",

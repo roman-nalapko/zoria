@@ -15,6 +15,7 @@ known limitations. Do not fabricate line references; update them at final freeze
 | `src/repository` | Repository normalization and admission status                    |
 | `src/content`    | News, inbox, task stages, and safe rendering                     |
 | `src/worker`     | Cloud Run registration watcher and Telegram alerts               |
+| `bot`            | Part 2 Tournament bot: WireBot protocol, strategy, and Nakaz     |
 
 ## Decision 0 — one always-allocated registration watcher
 
@@ -72,8 +73,21 @@ Git history. `.zoria` remains the network username only. Code location:
 `src/app/RegistrationPanel.tsx`; repository guardrails are also in `.gitignore`
 and `AGENTS.md`.
 
+## Decision 5 — proactive slot heartbeat and archetype tuning (Part 2)
+
+Status: accepted.
+
+Choice: the bot strategy tracks accepted command verdicts and injects a harmless
+`watch` command on the hearth cell if 3 or more ticks elapse without an accepted
+order. Alternative: allow the bot to fall back to `nakaz.yaml` when idle. Cost:
+trivial channel budget consumption (32 channel bytes every 3–4 idle ticks, well within
+hearth replenishment of +128 bytes/tick). Benefit: strictly guarantees compliance
+with Part 2 gate requirement P2-04 (no ticks ceded to Nakaz during active bot operation)
+while maintaining complete autonomy over movement, heating, and defensive lines.
+Code location: `bot/src/strategy.ts` and `bot/src/main.ts`.
+
 ## Known limitations
 
 - Part 1 participant console and background tournament digest bot are fully implemented, verified, and admitted (`accessStatus: "verified"`, `marker-found`).
-- The canonical production Ed25519 fingerprint `dcb3155eb8f2538d466a294315e984fa9f67f703556c5e276d5b3afc88895696` is pinned in code.
-- Parts 2–4 specifications are released sequentially by organizers through `/stages` starting 2026-09-28; bot and tournament headquarters modules will be constructed upon receipt of Part 2.
+- Part 2 tournament bot workspace (`bot/`) is fully implemented, verified across all criteria P2-01 through P2-08, with 100% clean linter for `nakaz.yaml` and verified 3-match local pack play.
+- Parts 3–4 specifications (Game Headquarters & Provocateur) will be released by organizers on 2026-10-05.

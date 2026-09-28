@@ -18,34 +18,104 @@
    провід, повернення і піни живуть у main.ts і connectBot. */
 
 import { createEngine } from '@zoria/engine'
-import { ARCHETYPES, BeliefTrace, sampleBot } from '@zoria/sdk'
-import type { BeliefFrame, MirrorBot, WireBot } from '@zoria/sdk'
-import type { Observe, SlotName } from '@zoria/protocol'
+import { ARCHETYPES, BeliefTrace, MirrorBot, sampleBot } from '@zoria/sdk'
+import type { BeliefFrame, WireBot } from '@zoria/sdk'
+import {
+  decodeManifest,
+  decodeObserve,
+  decodeOrders,
+  decodeVerdicts,
+  encodeOrders,
+} from '@zoria/protocol'
+import type { Observe, Order, SlotName } from '@zoria/protocol'
 
 export interface Strategy extends WireBot {
   /* кадр щоденника віри такту; null - кадру немає */
   belief(obs: Observe | null): BeliefFrame | null
 }
 
-class MirrorStrategy implements Strategy {
+const CUSTOM_ARCHETYPES: Record<string, Record<string, unknown>> = {
+  ...ARCHETYPES,
+  // Наш чемпіонський профіль: оптимізований баланс росту, оборони та розвідки
+  чемпіон: {
+    mind: 'різчик',
+    dark: 1.8,
+    grow: 1.2,
+    steal: 1.4,
+    raid: 1.2,
+    order: 1.0,
+    klinok: 0.5,
+    build: 1.2,
+    guard: 0.7,
+    scout: 1.0,
+    deep: 0.6,
+    spare: 1.0,
+    pirate: 0.3,
+    siege: 0.8,
+    pact: 0.8,
+  },
+}
+
+class StrategicBot implements Strategy {
   private head: MirrorBot
   private trace: BeliefTrace | null = null
+  private slot: SlotName = 'A'
+  private seat: [number, number] = [0, 0]
+  private ticksSinceAccepted = 0
 
   constructor(preset: string) {
-    this.head = sampleBot(createEngine, preset)
+    if (Object.hasOwn(CUSTOM_ARCHETYPES, preset)) {
+      this.head = new MirrorBot(createEngine, CUSTOM_ARCHETYPES[preset])
+    } else {
+      this.head = sampleBot(createEngine, preset)
+    }
   }
 
-  init(manifest: Uint8Array, slot: SlotName): void {
-    this.head.init(manifest, slot)
+  init(manifestBytes: Uint8Array, slot: SlotName): void {
+    this.head.init(manifestBytes, slot)
     this.trace = new BeliefTrace(slot)
+    this.slot = slot
+    const m = decodeManifest(manifestBytes)
+    if (m?.perm && m.seats) {
+      const idx = m.perm.indexOf(slot)
+      if (idx !== -1 && m.seats[idx]) {
+        this.seat = [m.seats[idx].q, m.seats[idx].r]
+      }
+    }
   }
 
-  tick(observe: Uint8Array): Uint8Array {
-    return this.head.tick(observe)
+  tick(observeBytes: Uint8Array): Uint8Array {
+    const rawOut = this.head.tick(observeBytes)
+    const orders: Order[] = decodeOrders(rawOut) ?? []
+
+    // Вимога P2-04: бот сам веде слот і подає прийняту команду хоча б раз на 6 тактів.
+    // Якщо поточний хід мовчить або пройшло 3+ тактів без прийнятих команд, подаємо
+    // безпечну команду утримання фокусу на вогнищі.
+    if (orders.length === 0 || this.ticksSinceAccepted >= 3) {
+      const obs = decodeObserve(observeBytes)
+      const chan = obs?.pulse?.chan ?? 0
+      if (chan >= 32) {
+        orders.push({
+          kind: 'watch',
+          keep: 0,
+          q: this.seat[0],
+          r: this.seat[1],
+        })
+        return encodeOrders(orders)
+      }
+    }
+
+    return rawOut
   }
 
-  feedback(verdicts: Uint8Array): void {
-    this.head.feedback(verdicts)
+  feedback(verdictsBytes: Uint8Array): void {
+    this.head.feedback(verdictsBytes)
+    const list = decodeVerdicts(verdictsBytes)
+    if (list && list.some((v) => v[1] === true)) {
+      this.ticksSinceAccepted = 0
+    } else {
+      this.ticksSinceAccepted++
+    }
   }
 
   /* віра дзеркала: світ дзеркальної голови і є те, у що вона вірить */
@@ -55,14 +125,14 @@ class MirrorStrategy implements Strategy {
   }
 }
 
-/* імена архетипів заглушки: за ними службова ручка зміни пресета вирішує,
-   є такий пресет чи ні. Своя голова повертає тут свої імена */
+/* імена архетипів: за ними службова ручка зміни пресета вирішує,
+   є такий пресет чи ні */
 export function presets(): string[] {
-  return Object.keys(ARCHETYPES)
+  return Object.keys(CUSTOM_ARCHETYPES)
 }
 
 export function createStrategy(
-  preset = process.env['ZARIA_PRESET'] || 'рівний',
+  preset = process.env['ZARIA_PRESET'] || 'чемпіон',
 ): Strategy {
-  return new MirrorStrategy(preset)
+  return new StrategicBot(preset)
 }

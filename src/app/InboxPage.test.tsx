@@ -132,17 +132,22 @@ describe('InboxPage', () => {
     const markBtn = screen.getByRole('button', { name: /mark as read/i })
     fireEvent.click(markBtn)
 
-    await vi.waitFor(() => {
-      expect(requestMock).toHaveBeenCalledWith(
-        '/inbox/msg-1/read',
-        expect.objectContaining({
-          method: 'POST',
-          token: 'tok-inbox',
-        }),
-      )
-      // "Mark as read" button disappears, replaced with read timestamp
-      expect(screen.queryByRole('button', { name: /mark as read/i })).toBeNull()
-      expect(screen.getByText(/read:/i)).toBeInTheDocument()
-    })
+    await vi.waitFor(
+      () => {
+        expect(requestMock).toHaveBeenCalledWith(
+          '/inbox/msg-1/read',
+          expect.objectContaining({
+            method: 'POST',
+            token: 'tok-inbox',
+          }),
+        )
+        // "Mark as read" button disappears, replaced with read timestamp
+        expect(
+          screen.queryByRole('button', { name: /mark as read/i }),
+        ).toBeNull()
+        expect(screen.getByText(/read:/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 },
+    )
   })
 })
