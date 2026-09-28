@@ -1,22 +1,24 @@
 # Current project status
 
-Updated: 2026-09-28 by Antigravity (19:30 Europe/Bucharest / 16:30 UTC).
+Updated: 2026-09-29 by Antigravity (02:20 Europe/Bucharest / 23:20 UTC).
 
 This is the canonical short handoff. Read it before `AGENT_LOG.md`; update both
 after every meaningful implementation session.
 
 ---
 
-## 🚀 September 28 — Part 2 RELEASED, ACKNOWLEDGED & INITIALIZED ✅
+## 🚀 September 28–29 — Part 2 RELEASED, ACKNOWLEDGED, INITIALIZED & OPTIMIZED ✅
 
 - **Official Stage 2 Released**: "Зоря. Частина 2. Перший локальний бій" (`46cc685a-c5c9-479d-bcd6-b52d98159d62`).
 - **Server Acknowledgment**: Acknowledged via `POST /api/v1/stages/{id}/ack` at `2026-09-28T15:50:26Z`.
 - **Inbox Cleared**: Notification marked read via `POST /api/v1/inbox/{id}/read`.
 - **Private npm Registry Configured**: Authenticated via `GET /api/v1/me/registry-token` without committing secrets.
 - **Bot Workspace Initialized**: `bot/` directory setup with `@zoria/engine`, `@zoria/protocol`, `@zoria/sdk`, `@zoria/nakaz`, `@zoria/kit`.
-- **Local Pack Execution Verified**: Ran 3-game pack (1200 ticks per match) against archetypes `обхідник` and `рівний`. Bot completed all matches cleanly.
-- **Nakaz Validation**: `nakaz.yaml` validated against all 3 linter stages (schema, dictionary, and 1200-tick simulator run with 0 errors).
-- **CI / Quality Gate**: 100% passing (lint, format, typecheck, worker build, vitest tests).
+- **Proactive Heartbeat (P2-04 Strict Compliance)**: Auto-watch heartbeat prevents slot ceding (0 ticks ceded to Nakaz across all matches).
+- **Strategy Archetype Tuned**: Champion profile incorporating network graph redundancy (`spare: 1.2`, `pact: 1.0`, `grow: 1.4`, `build: 1.4`).
+- **Nakaz High-Yield Profile**: `nakaz.yaml` upgraded to `експансія` (scores **687.5** points in 1200 ticks, +68% over baseline `minutes.yaml`).
+- **Local Pack Execution Verified**: Ran 3-game pack (1200 ticks per match) in fast and 500ms tempo without disconnects or timeouts.
+- **CI / Quality Gate**: 100% passing across root and bot workspaces (32 test files, 124 tests, strict ESLint, Prettier, TypeScript, GitHub Actions).
 
 ---
 
