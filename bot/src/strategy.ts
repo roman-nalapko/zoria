@@ -1,25 +1,21 @@
 /* bot :: strategy
-   Чемпіонська стратегія "Математичний Оптимум" на базі BlankBot.
-
-   Математична оптимізація:
-   1. Marginal Yield Density: кожна сота оцінюється за типом землі (луг=3, гай/рівнина=2,
-      пісок/болото/пагорб=1). Вихід кожної голки розраховується за ядром згортки
-      покриття радіуса 3 (1.0 на кільцях 0-1, 2/3 на кільці 2, 1/3 на кільці 3).
-   2. ROI-селектор цілей:
-      Score(u, r) = (Yield(r) * Multiplier * 0.0005 * BurnTicks * ConnFactor) / InvestTicks,
-      де InvestTicks = 2 * dist(u, r) + 8.
-   3. Топологічна зв'язність: голки, що з'єднуються з палаючою мережею негайно (<= 5 сот),
-      отримують повний коефіцієнт (1.0); незв'язні дисконтуються.
-   4. Теорія ігор аукціонів: автоматичні ставки (65 заряду) на тактах 150/350/550/750/900
-      для миттєвого отримання 2 безкоштовних голок.
-   5. Дипломатичний захист (pact): прийняття вхідних пропозицій розриває ворожі альянси
-      та на рівні рушія блокує глушіння наших голок і таран човників.
-   6. Живлення палаючих голок (feed): вільні Ткачі розширюють покриття голок на 1 кільце назовні (+24 соти тяги).
-   7. Передзоряне позиціонування (950–999) та штурм Зорі (1000–1200, х2 множник).
-   8. Heartbeat (P2-04): гарантія збереження керування слотом (watch кожні <= 3 такти). */
+   Чемпіонська стратегія "Математичний Оптимум 2.0":
+   1. Marginal Yield Density: повна згортка цінності соток за картою (луг=3, гай/рівнина=2, пісок/болото=1).
+   2. Crown Cycle Formulator (х1.15): алгоритмічний пошук мінімального циклу з 6 голок
+      від вогнища. Пріоритет замикання циклу для постійного +15% множника всієї мережі.
+   3. Anti-Contest & CapGrace Watchdog: моніторинг ворожих захоплень (obs.events + obs.own).
+      Якщо руїну взяв опонент, Ткач негайно перенаправляється (щоб не стояти 60 тактів паузи).
+   4. Детекція зайнятих руїн: якщо ворожий Ткач уже стоїть на руїні (obs.foe), вона відсікається.
+   5. Координовані замовлення (+30 хв): паралельне захоплення відсутніх ланок замовлення Доглядача.
+   6. Торги (Аукціони): оптимальна ставка 65 на тактах 150/350/550/750/900 для миттєвих голок.
+   7. Дипломатичний щит: прийняття вхідних угод для захисту від глушіння та тарана.
+   8. Передзоряне позиціонування (950–999) + штурм Зорі (1000–1200, х2 множник).
+   9. Живлення (feed): вільні Ткачі на палаючих голках збільшують покриття (+24 соти тяги).
+   10. Heartbeat (P2-04): гарантія збереження керування слотом (watch кожні <= 3 такти). */
 
 import { BlankBot } from '@zoria/sdk'
 import type { BeliefFrame, WireBot } from '@zoria/sdk'
+import { createEngine } from '@zoria/engine'
 import { decodeVerdicts } from '@zoria/protocol'
 import type {
   Observe,
@@ -60,9 +56,15 @@ class Champion extends BlankBot implements Strategy {
   private lots: LotSpec[] = []
   private biddedLots = new Set<number>()
 
-  // Математична мапа доходів сот та голок
+  // Математична теплова мапа доходів сот та голок
   private cellPriceMap = new Map<string, number>()
   private needleYieldMap = new Map<string, number>()
+
+  // 6-елементний цикл Вінця (Crown Cycle) для активації множника х1.15
+  private crownCycleRuins = new Set<string>()
+
+  // Відстеження ворожого володіння та пауз після взяття (capGrace = 60)
+  private enemyGraceUntil = new Map<string, number>()
 
   // Призначення: unitId -> цільовий гекс
   private unitTarget = new Map<string, Hex>()
@@ -78,7 +80,7 @@ class Champion extends BlankBot implements Strategy {
     this.cherta = m.cherta
     this.lots = m.lots || []
 
-    // 1. Попередня побудова цінової мапи сот
+    // 1. Цінова мапа сот
     const types = m.terrain.types
     const defaultPrice = types[0]?.min ?? 2
     for (const [q, r, typeIdx] of m.terrain.cells) {
@@ -88,7 +90,7 @@ class Champion extends BlankBot implements Strategy {
     const getPrice = (q: number, r: number) =>
       this.cellPriceMap.get(`${q},${r}`) ?? defaultPrice
 
-    // 2. Розрахунок потенційної тяги (Yield) для кожної голки
+    // 2. Обчислення згортки покриття (Yield) кожної голки
     for (const n of m.needles) {
       if (n.ring) {
         this.ringNeedles.push({ q: n.q, r: n.r })
@@ -96,7 +98,6 @@ class Champion extends BlankBot implements Strategy {
         this.ruins.push({ q: n.q, r: n.r })
       }
 
-      // Обчислення згортки покриття для голки в радіусі 3
       let y = 0
       for (let dq = -3; dq <= 3; dq++) {
         for (let dr = Math.max(-3, -dq - 3); dr <= Math.min(3, -dq + 3); dr++) {
@@ -108,11 +109,76 @@ class Champion extends BlankBot implements Strategy {
       this.needleYieldMap.set(`${n.q},${n.r}`, y)
     }
 
-    // Початкове сортування за відстанню від бази
     this.ruins.sort((a, b) => hexDist(a, this.seat) - hexDist(b, this.seat))
     this.ringNeedles.sort(
       (a, b) => hexDist(a, this.seat) - hexDist(b, this.seat),
     )
+
+    // 3. Пошук оптимального 6-циклу Вінця (Crown Cycle) за допомогою рушія
+    try {
+      const E = createEngine()
+      E.simInit((m as unknown as { seed?: number }).seed || 2026)
+      const seatLetter = (['A', 'B', 'C'][idx] || 'A') as 'A' | 'B' | 'C'
+      const startKeys = (E.START_CHAIN && E.START_CHAIN[seatLetter]) || []
+      const nonRing = E.NEEDLES.filter((n: { ring?: boolean }) => !n.ring)
+
+      const adj = new Map<string, string[]>()
+      for (const n of nonRing) adj.set(n.key, [])
+      for (let i = 0; i < nonRing.length; i++) {
+        for (let j = i + 1; j < nonRing.length; j++) {
+          const a = nonRing[i]
+          const b = nonRing[j]
+          if (E.linkOk(a.q, a.r, b.q, b.r)) {
+            adj.get(a.key)!.push(b.key)
+            adj.get(b.key)!.push(a.key)
+          }
+        }
+      }
+
+      let bestCycle: string[] = []
+      let minMaxD = Infinity
+
+      const dfs = (curr: string, path: string[], visited: Set<string>) => {
+        if (path.length >= 6) {
+          if (adj.get(curr)?.includes(path[0]!)) {
+            let maxD = 0
+            for (const k of path) {
+              const [q, r] = k.split(',').map(Number)
+              const d = hexDist({ q: q!, r: r! }, this.seat)
+              if (d > maxD) maxD = d
+            }
+            if (maxD < minMaxD) {
+              minMaxD = maxD
+              bestCycle = [...path]
+            }
+            return
+          }
+        }
+        if (path.length >= 7) return
+        for (const next of adj.get(curr) || []) {
+          if (!visited.has(next)) {
+            visited.add(next)
+            dfs(next, [...path, next], visited)
+            visited.delete(next)
+          }
+        }
+      }
+
+      for (const s of startKeys) {
+        dfs(s, [s], new Set([s]))
+      }
+
+      for (const k of bestCycle) {
+        if (!startKeys.includes(k)) {
+          this.crownCycleRuins.add(k)
+        }
+      }
+    } catch {
+      // Якщо граф недоступний, використовуємо найближчі руїни
+      for (const r of this.ruins.slice(0, 4)) {
+        this.crownCycleRuins.add(`${r.q},${r.r}`)
+      }
+    }
   }
 
   private getYield(h: Hex): number {
@@ -131,6 +197,31 @@ class Champion extends BlankBot implements Strategy {
     const ownedKeys = new Set(ownedNeedles.map((n) => `${n.q},${n.r}`))
     const litNeedles = ownedNeedles.filter((n) => !n.dark)
 
+    // ── Моніторинг захоплень ворогами та пауз (capGrace = 60) ───────────────
+    for (const ev of obs.events) {
+      if (
+        ev.type === 'cap' &&
+        ev.p &&
+        ev.p !== this.slot &&
+        ev.q !== undefined &&
+        ev.r !== undefined
+      ) {
+        this.enemyGraceUntil.set(`${ev.q},${ev.r}`, t + 60)
+      }
+    }
+
+    const enemyOwnedKeys = new Set<string>()
+    for (const c of obs.own) {
+      if (c.owner && c.owner !== this.slot && c.owner !== 'K') {
+        enemyOwnedKeys.add(`${c.q},${c.r}`)
+      }
+    }
+
+    // Ворожі Ткачі, які вже стоять на руїнах і гріють їх
+    const foeWeavers = new Set(
+      obs.foe.filter((f) => f.cls === 'ткач').map((f) => `${f.q},${f.r}`),
+    )
+
     // Очищення цілей машин, які загинули
     const liveIds = new Set(obs.mine.units.map((u) => u.id))
     for (const uid of Array.from(this.unitTarget.keys())) {
@@ -147,7 +238,7 @@ class Champion extends BlankBot implements Strategy {
 
     let chanLeft = chan
 
-    // ── 1. Торги (Аукціони): оптимальна стратегія ────────────────────────────
+    // ── 1. Торги (Аукціони) ──────────────────────────────────────────────────
     for (let i = 0; i < this.lots.length; i++) {
       const lot = this.lots[i]
       if (lot && t >= lot.at - 20 && t < lot.at && !this.biddedLots.has(i)) {
@@ -175,49 +266,156 @@ class Champion extends BlankBot implements Strategy {
       }
     }
 
-    // ── 3. Верф: розгортання рою з 4 Ткачів ──────────────────────────────────
+    // ── 3. Верф: адаптивне розгортання рою ─────────────────────────────────
     const tkachs = obs.mine.units.filter((u) => u.cls === 'ткач')
+    const klinoks = obs.mine.units.filter((u) => u.cls === 'клинок')
     const squadWeight = obs.mine.units.reduce(
       (s, u) => s + (u.cls === 'ткач' ? 2 : 1),
       0,
     )
 
-    if (
-      !isDawn &&
-      chanLeft >= 32 &&
-      energy >= 90 &&
-      squadWeight <= 6 &&
-      tkachs.length < 4 &&
-      t < 500
-    ) {
-      orders.push({ kind: 'yard', cls: 'ткач' })
-      chanLeft -= 32
+    // Якщо є загроза глушіння (активні завади або ворожі Клинки біля наших голок):
+    const hasJams = obs.mine.jams.length > 0
+    const nearbyEnemyKlinok = obs.foe.some(
+      (f) =>
+        f.cls === 'клинок' &&
+        litNeedles.some((n) => hexDist(f, { q: n.q, r: n.r }) <= 6),
+    )
+    const needDefender =
+      (hasJams || nearbyEnemyKlinok) && klinoks.length === 0 && t > 200
+
+    if (!isDawn && chanLeft >= 32) {
+      if (tkachs.length < 3 && energy >= 90 && squadWeight <= 6 && t < 500) {
+        // Перші 3 машини — завжди Ткачі (швидка експансія та вінець)
+        orders.push({ kind: 'yard', cls: 'ткач' })
+        chanLeft -= 32
+      } else if (
+        needDefender &&
+        energy >= 50 &&
+        squadWeight <= 7 &&
+        klinoks.length < 1
+      ) {
+        // Будуємо Клинок-перехоплювач для тарана ворожих глушників
+        orders.push({ kind: 'yard', cls: 'клинок' })
+        chanLeft -= 32
+      } else if (
+        tkachs.length < 4 &&
+        energy >= 90 &&
+        squadWeight <= 6 &&
+        t < 500
+      ) {
+        // Якщо загрози немає — 4-й Ткач для максимальної експансії
+        orders.push({ kind: 'yard', cls: 'ткач' })
+        chanLeft -= 32
+      }
+    }
+
+    // ── Керування Клинком-перехоплювачем ─────────────────────────────────────
+    if (klinoks.length > 0 && chanLeft >= 32) {
+      const k = klinoks[0]!
+      if (k.wait === 0) {
+        // 1. Таран: знайти ворожий Клинок, що глушить нашу голку або підійшов до мережі
+        const targetJammer = obs.foe.find(
+          (f) =>
+            f.cls === 'клинок' &&
+            (obs.mine.jams.some((j) => hexDist(f, { q: j.q, r: j.r }) <= 1) ||
+              litNeedles.some((n) => hexDist(f, { q: n.q, r: n.r }) <= 5)),
+        )
+
+        if (targetJammer && !k.task?.ram) {
+          orders.push({ kind: 'ram', unit: k.id, target: targetJammer.id })
+          chanLeft -= 32
+        } else if (!targetJammer) {
+          // 2. Якщо захищати нічого — глушіння найближчої палаючої голки суперника
+          const enemyLitNeedles = obs.own.filter(
+            (c) =>
+              c.owner !== null &&
+              c.owner !== this.slot &&
+              c.owner !== 'K' &&
+              !c.dark,
+          )
+          if (enemyLitNeedles.length > 0) {
+            const nearestEnemyNeedle = enemyLitNeedles
+              .slice()
+              .sort(
+                (a, b) =>
+                  hexDist({ q: k.q, r: k.r }, a) -
+                  hexDist({ q: k.q, r: k.r }, b),
+              )[0]!
+
+            const d = hexDist({ q: k.q, r: k.r }, nearestEnemyNeedle)
+            if (d <= 1) {
+              if (!k.task?.jam && chanLeft >= 32) {
+                orders.push({
+                  kind: 'jam',
+                  unit: k.id,
+                  target: {
+                    q: nearestEnemyNeedle.q,
+                    r: nearestEnemyNeedle.r,
+                  },
+                  hold: true,
+                })
+                chanLeft -= 32
+              }
+            } else if (!k.task?.goal && chanLeft >= 32) {
+              orders.push({
+                kind: 'move',
+                unit: k.id,
+                q: nearestEnemyNeedle.q,
+                r: nearestEnemyNeedle.r,
+                goal: null,
+                home: false,
+              })
+              chanLeft -= 32
+            }
+          }
+        }
+      }
     }
 
     // ── 4. Доступні руїни та голки кільця ───────────────────────────────────
-    const availRuins: Hex[] = this.ruins.filter(
-      (h) => !claimedKeys.has(`${h.q},${h.r}`),
-    )
+    const isCandidateAvailable = (h: Hex) => {
+      const key = `${h.q},${h.r}`
+      if (claimedKeys.has(key)) return false
+      // Якщо голка під ворожою паузою взяття (capGrace), вона заблокована
+      const grace = this.enemyGraceUntil.get(key)
+      if (grace && grace > t) return false
+      // Якщо на руїні вже стоїть ворожий Ткач і гріє її — не втручаємось
+      if (foeWeavers.has(key)) return false
+      return true
+    }
+
+    const availRuins: Hex[] = this.ruins.filter(isCandidateAvailable)
     const availRing: Hex[] = isDawn
-      ? this.ringNeedles.filter((h) => !claimedKeys.has(`${h.q},${h.r}`))
+      ? this.ringNeedles.filter(isCandidateAvailable)
       : []
 
-    // Передзоря: вільні голки кільця після такту 950
     const preDawnRing: Hex[] =
-      !isDawn && t >= 950
-        ? this.ringNeedles.filter((h) => !claimedKeys.has(`${h.q},${h.r}`))
-        : []
+      !isDawn && t >= 950 ? this.ringNeedles.filter(isCandidateAvailable) : []
 
-    // Замовлення Доглядача "Утримати лінію"
+    // Замовлення Доглядача "Утримати лінію" (+30 хв)
     const orderBoard = obs.pub.order
     let orderTargets: Hex[] = []
     if (orderBoard && t <= orderBoard.to - 15) {
-      orderTargets = orderBoard.cells.filter(
-        (c) => !claimedKeys.has(`${c.q},${c.r}`),
+      const missingCells = orderBoard.cells.filter(
+        (c) =>
+          !ownedKeys.has(`${c.q},${c.r}`) && !claimedKeys.has(`${c.q},${c.r}`),
       )
+      // Беремо замовлення, якщо до його сот є доступ (<= 14 від вогнища чи палаючої голки)
+      const reachable = missingCells.every((c) => {
+        let minD = hexDist(c, this.seat)
+        for (const ln of litNeedles) {
+          const d = hexDist(c, ln)
+          if (d < minD) minD = d
+        }
+        return minD <= 14
+      })
+      if (reachable) {
+        orderTargets = missingCells
+      }
     }
 
-    // ── 5. Математична функція оцінки привабливості цілі ───────────────────
+    // ── 5. Математична функція оцінки ROI цілі ──────────────────────────────
     const minLitDist = (h: Hex): number => {
       let minD = hexDist(h, this.seat)
       for (const ln of litNeedles) {
@@ -232,6 +430,7 @@ class Champion extends BlankBot implements Strategy {
       targetHex: Hex,
       isRingTarget: boolean,
     ): number => {
+      const key = `${targetHex.q},${targetHex.r}`
       const d = hexDist(u, targetHex)
       const investTicks = 2 * d + 8
       const remTicks = 1200 - t
@@ -245,33 +444,41 @@ class Champion extends BlankBot implements Strategy {
       const litD = minLitDist(targetHex)
       const connFactor = litD <= 5 ? 1.0 : litD <= 10 ? 0.6 : 0.25
 
+      // Бонус за замикання циклу Вінця (Crown Cycle Bonus x1.15)
+      const crownBonus = this.crownCycleRuins.has(key) ? 1.5 : 1.0
+
       const expectedMinutes =
-        baseYield * multiplier * 0.0005 * burnTicks * connFactor
+        baseYield * multiplier * crownBonus * 0.0005 * burnTicks * connFactor
       return expectedMinutes / investTicks
     }
 
-    // ── 6. Призначення завдань Ткачам ───────────────────────────────────────
+    // ── 6. Призначення та керування Ткачами ──────────────────────────────────
     for (const u of tkachs) {
       if (chanLeft < 32) break
 
       const prevTarget = this.unitTarget.get(u.id)
 
-      // Машина в русі між сотками — перенаправляти не можна
+      // Машина посеред кроку — команди відхиляються
       if (u.wait > 0) continue
 
-      // Машина прибула на місце
-      if (prevTarget && hexEq({ q: u.q, r: u.r }, prevTarget)) {
+      // Анти-конкуренція: якщо призначену ціль захопив ворог, скасовуємо завдання негайно
+      if (
+        prevTarget &&
+        enemyOwnedKeys.has(`${prevTarget.q},${prevTarget.r}`) &&
+        !ownedKeys.has(`${prevTarget.q},${prevTarget.r}`)
+      ) {
+        this.unitTarget.delete(u.id)
+        // Ткач вільний — перейде до пошуку нової цілі нижче
+      } else if (prevTarget && hexEq({ q: u.q, r: u.r }, prevTarget)) {
         if (ownedKeys.has(`${prevTarget.q},${prevTarget.r}`)) {
-          // Голку захоплено — звільняємо машину для нової цілі
+          // Голку захоплено — звільняємо машину
           this.unitTarget.delete(u.id)
         } else {
-          // Триває процес прогріву — стоїмо на місці
+          // Триває процес нагрівання — стоїмо на місці
           continue
         }
-      }
-
-      // Машина зупинилася в дорозі до цілі — відновлюємо рух
-      if (prevTarget && !hexEq({ q: u.q, r: u.r }, prevTarget)) {
+      } else if (prevTarget && !hexEq({ q: u.q, r: u.r }, prevTarget)) {
+        // Відновлення руху, якщо шлях завершився раніше
         if (!u.task?.goal) {
           if (chanLeft >= 32) {
             orders.push({
@@ -288,7 +495,7 @@ class Champion extends BlankBot implements Strategy {
         continue
       }
 
-      // ── Обчислення найкращої цілі за ROI ──────────────────────────────────
+      // ── Обчислення найкращої цілі ─────────────────────────────────────────
       let bestTarget: Hex | undefined
       let bestScore = -1
       let isRing = false
@@ -330,7 +537,7 @@ class Champion extends BlankBot implements Strategy {
         }
       }
 
-      // Пріоритет Г: Звичайні вільні руїни (за математичним ROI)
+      // Пріоритет Г: Вільні руїни (за ROI з урахуванням Вінця та доходів)
       if (!bestTarget) {
         const validRuins = availRuins.filter(
           (h) => isDawn || hexDist(h, this.citadel) > this.cherta,
@@ -345,7 +552,7 @@ class Champion extends BlankBot implements Strategy {
         }
       }
 
-      // Пріоритет Д: Якщо цілей немає — живити свою палаючу голку
+      // Пріоритет Д: Якщо вільних цілей немає — живити свою палаючу голку
       if (!bestTarget) {
         const standingOnLit = litNeedles.find((n) =>
           hexEq(n, { q: u.q, r: u.r }),
@@ -362,7 +569,7 @@ class Champion extends BlankBot implements Strategy {
         continue
       }
 
-      // Відправка до знайденої оптимальної цілі
+      // Відправка до цілі
       if (bestTarget && chanLeft >= 32) {
         const key = `${bestTarget.q},${bestTarget.r}`
         this.unitTarget.set(u.id, bestTarget)
@@ -389,7 +596,7 @@ class Champion extends BlankBot implements Strategy {
       }
     }
 
-    // ── 7. Heartbeat (P2-04): гарантія активності слота ─────────────────────
+    // ── 7. Heartbeat (P2-04): підтримка володіння слотом ─────────────────────
     if (orders.length === 0 || this.ticksSinceAccepted >= 3) {
       if (chanLeft >= 32) {
         orders.push({
