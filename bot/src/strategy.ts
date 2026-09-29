@@ -238,14 +238,18 @@ class Champion extends BlankBot implements Strategy {
 
     let chanLeft = chan
 
-    // ── 1. Торги (Аукціони) ──────────────────────────────────────────────────
+    // ── 1. Торги (Аукціони): оптимальна ставка 71 (вибиває ставки 60 і 65) ──
     for (let i = 0; i < this.lots.length; i++) {
       const lot = this.lots[i]
       if (lot && t >= lot.at - 20 && t < lot.at && !this.biddedLots.has(i)) {
         const hasUnowned = lot.cells.some(
           (c) => !ownedKeys.has(`${c.q},${c.r}`),
         )
-        if (hasUnowned && energy >= 65 && chanLeft >= 32) {
+        if (hasUnowned && energy >= 71 && chanLeft >= 32) {
+          orders.push({ kind: 'bid', lot: i, amount: 71 })
+          this.biddedLots.add(i)
+          chanLeft -= 32
+        } else if (hasUnowned && energy >= 65 && chanLeft >= 32) {
           orders.push({ kind: 'bid', lot: i, amount: 65 })
           this.biddedLots.add(i)
           chanLeft -= 32
@@ -274,15 +278,22 @@ class Champion extends BlankBot implements Strategy {
       0,
     )
 
-    // Якщо є загроза глушіння (активні завади або ворожі Клинки біля наших голок):
+    // Якщо є загроза глушіння чи прориву (активні завади або ворожі машини біля наших голок):
     const hasJams = obs.mine.jams.length > 0
     const nearbyEnemyKlinok = obs.foe.some(
       (f) =>
         f.cls === 'клинок' &&
         litNeedles.some((n) => hexDist(f, { q: n.q, r: n.r }) <= 6),
     )
+    const nearbyEnemyTkach = obs.foe.some(
+      (f) =>
+        f.cls === 'ткач' &&
+        litNeedles.some((n) => hexDist(f, { q: n.q, r: n.r }) <= 4),
+    )
     const needDefender =
-      (hasJams || nearbyEnemyKlinok) && klinoks.length === 0 && t > 200
+      (hasJams || nearbyEnemyKlinok || nearbyEnemyTkach) &&
+      klinoks.length === 0 &&
+      t > 150
 
     if (!isDawn && chanLeft >= 32) {
       if (tkachs.length < 3 && energy >= 90 && squadWeight <= 6 && t < 500) {
@@ -295,7 +306,7 @@ class Champion extends BlankBot implements Strategy {
         squadWeight <= 7 &&
         klinoks.length < 1
       ) {
-        // Будуємо Клинок-перехоплювач для тарана ворожих глушників
+        // Будуємо Клинок-перехоплювач для тарана ворожих загарбників і глушників
         orders.push({ kind: 'yard', cls: 'клинок' })
         chanLeft -= 32
       } else if (
@@ -314,18 +325,28 @@ class Champion extends BlankBot implements Strategy {
     if (klinoks.length > 0 && chanLeft >= 32) {
       const k = klinoks[0]!
       if (k.wait === 0) {
-        // 1. Таран: знайти ворожий Клинок, що глушить нашу голку або підійшов до мережі
-        const targetJammer = obs.foe.find(
-          (f) =>
-            f.cls === 'клинок' &&
-            (obs.mine.jams.some((j) => hexDist(f, { q: j.q, r: j.r }) <= 1) ||
-              litNeedles.some((n) => hexDist(f, { q: n.q, r: n.r }) <= 5)),
-        )
+        // 1. Таран: знайти пріоритетну ціль (глушник, ворожий Клинок або загарбник біля наших голок)
+        const targetToRam =
+          obs.foe.find(
+            (f) =>
+              f.cls === 'клинок' &&
+              (obs.mine.jams.some((j) => hexDist(f, { q: j.q, r: j.r }) <= 1) ||
+                litNeedles.some((n) => hexDist(f, { q: n.q, r: n.r }) <= 5)),
+          ) ||
+          obs.foe.find(
+            (f) =>
+              f.cls === 'ткач' &&
+              litNeedles.some((n) => hexDist(f, { q: n.q, r: n.r }) <= 4),
+          ) ||
+          obs.foe.find(
+            (f) =>
+              f.cls === 'ткач' && this.ruins.some((r) => hexDist(f, r) <= 1),
+          )
 
-        if (targetJammer && !k.task?.ram) {
-          orders.push({ kind: 'ram', unit: k.id, target: targetJammer.id })
+        if (targetToRam && !k.task?.ram) {
+          orders.push({ kind: 'ram', unit: k.id, target: targetToRam.id })
           chanLeft -= 32
-        } else if (!targetJammer) {
+        } else if (!targetToRam) {
           // 2. Якщо захищати нічого — глушіння найближчої палаючої голки суперника
           const enemyLitNeedles = obs.own.filter(
             (c) =>
