@@ -69,8 +69,17 @@ class Champion extends BlankBot implements Strategy {
   // Призначення: unitId -> цільовий гекс
   private unitTarget = new Map<string, Hex>()
 
+  // Відстеження позицій та блокувань (Body-Block & Collision Deadlock Watchdog)
+  private unitLastPos = new Map<
+    string,
+    { q: number; r: number; ticks: number }
+  >()
+  private stuckTargetCooldown = new Map<string, number>()
+
   override init(manifestBytes: Uint8Array, slot: SlotName): void {
     super.init(manifestBytes, slot)
+    this.unitLastPos.clear()
+    this.stuckTargetCooldown.clear()
     const m = this.manifest as Manifest
 
     const idx = m.perm.indexOf(slot)
@@ -342,7 +351,7 @@ class Champion extends BlankBot implements Strategy {
       t > 150
 
     if (!isDawn && chanLeft >= 32) {
-      if (tkachs.length < 3 && energy >= 90 && squadWeight <= 6 && t < 500) {
+      if (tkachs.length < 3 && energy >= 90 && squadWeight <= 6 && t < 850) {
         // Перші 3 машини — завжди Ткачі (швидка експансія та вінець)
         orders.push({ kind: 'yard', cls: 'ткач' })
         chanLeft -= 32
@@ -350,7 +359,8 @@ class Champion extends BlankBot implements Strategy {
         needDefender &&
         energy >= 50 &&
         squadWeight <= 7 &&
-        klinoks.length < 1
+        klinoks.length < 1 &&
+        t < 950
       ) {
         // Будуємо Клинок-перехоплювач для тарана ворожих загарбників і глушників
         orders.push({ kind: 'yard', cls: 'клинок' })
@@ -359,7 +369,7 @@ class Champion extends BlankBot implements Strategy {
         tkachs.length < 4 &&
         energy >= 90 &&
         squadWeight <= 6 &&
-        t < 500
+        t < 850
       ) {
         // Якщо загрози немає — 4-й Ткач для максимальної експансії
         orders.push({ kind: 'yard', cls: 'ткач' })
@@ -512,11 +522,15 @@ class Champion extends BlankBot implements Strategy {
     }
 
     const scoreCandidate = (
+      unitId: string,
       u: Hex,
       targetHex: Hex,
       isRingTarget: boolean,
     ): number => {
       const key = `${targetHex.q},${targetHex.r}`
+      const stuckUntil = this.stuckTargetCooldown.get(`${unitId}:${key}`)
+      if (stuckUntil && stuckUntil > t) return -1
+
       const d = hexDist(u, targetHex)
       const investTicks = 2 * d + 8
       const remTicks = 1200 - t
@@ -547,26 +561,47 @@ class Champion extends BlankBot implements Strategy {
       // Машина посеред кроку — команди відхиляються
       if (u.wait > 0) continue
 
-      // Анти-конкуренція: якщо призначену ціль захопив ворог, скасовуємо завдання негайно
-      if (
-        prevTarget &&
-        enemyOwnedKeys.has(`${prevTarget.q},${prevTarget.r}`) &&
-        !ownedKeys.has(`${prevTarget.q},${prevTarget.r}`)
-      ) {
-        this.unitTarget.delete(u.id)
-        // Ткач вільний — перейде до пошуку нової цілі нижче
-      } else if (prevTarget && hexEq({ q: u.q, r: u.r }, prevTarget)) {
-        if (ownedKeys.has(`${prevTarget.q},${prevTarget.r}`)) {
-          // Голку захоплено — звільняємо машину
+      // Відстеження позиції для виявлення та зриву глухих кутів (Body-Block Deadlock Watchdog)
+      const lastPos = this.unitLastPos.get(u.id)
+      if (lastPos && lastPos.q === u.q && lastPos.r === u.r) {
+        lastPos.ticks++
+      } else {
+        this.unitLastPos.set(u.id, { q: u.q, r: u.r, ticks: 1 })
+      }
+      const ticksAtPos = this.unitLastPos.get(u.id)!.ticks
+
+      // Перевірка активної цілі
+      if (prevTarget) {
+        const targetKey = `${prevTarget.q},${prevTarget.r}`
+        const atTarget = hexEq({ q: u.q, r: u.r }, prevTarget)
+        const isEnemyOwned =
+          enemyOwnedKeys.has(targetKey) && !ownedKeys.has(targetKey)
+        const isGrace =
+          this.enemyGraceUntil.has(targetKey) &&
+          this.enemyGraceUntil.get(targetKey)! > t
+        const isStuck =
+          u.stuck || (!atTarget && u.work === 0 && ticksAtPos >= 6)
+
+        if (atTarget) {
+          if (ownedKeys.has(targetKey)) {
+            // Голку захоплено — звільняємо машину
+            this.unitTarget.delete(u.id)
+          } else {
+            // Триває процес нагрівання — стоїмо на місці
+            continue
+          }
+        } else if (isEnemyOwned || isGrace || isStuck) {
+          // Ціль перехоплена ворогом або Ткач застряг у зіткненні
           this.unitTarget.delete(u.id)
+          claimedKeys.delete(targetKey)
+          if (isStuck) {
+            this.stuckTargetCooldown.set(`${u.id}:${targetKey}`, t + 30)
+          }
+          // Ткач вільний — перейде до обчислення іншої цілі нижче
         } else {
-          // Триває процес нагрівання — стоїмо на місці
-          continue
-        }
-      } else if (prevTarget && !hexEq({ q: u.q, r: u.r }, prevTarget)) {
-        // Відновлення руху, якщо шлях завершився раніше
-        if (!u.task?.goal) {
-          if (chanLeft >= 32) {
+          // Машина в дорозі: надсилаємо рух ТІЛЬКИ якщо шлях зупинився і вона не гріє
+          const hasPath = (u.task?.path ?? 0) > 0
+          if (!hasPath && u.work === 0 && !u.task?.goal && chanLeft >= 32) {
             orders.push({
               kind: 'move',
               unit: u.id,
@@ -577,8 +612,8 @@ class Champion extends BlankBot implements Strategy {
             })
             chanLeft -= 32
           }
+          continue
         }
-        continue
       }
 
       // ── Обчислення найкращої цілі ─────────────────────────────────────────
@@ -589,7 +624,7 @@ class Champion extends BlankBot implements Strategy {
       // Пріоритет А: Зоряний штурм кільця Ключника (х2 множник)
       if (isDawn && availRing.length > 0) {
         for (const ringHex of availRing) {
-          const s = scoreCandidate({ q: u.q, r: u.r }, ringHex, true)
+          const s = scoreCandidate(u.id, { q: u.q, r: u.r }, ringHex, true)
           if (s > bestScore) {
             bestScore = s
             bestTarget = ringHex
@@ -629,7 +664,7 @@ class Champion extends BlankBot implements Strategy {
           (h) => isDawn || hexDist(h, this.citadel) > this.cherta,
         )
         for (const rHex of validRuins) {
-          const s = scoreCandidate({ q: u.q, r: u.r }, rHex, false)
+          const s = scoreCandidate(u.id, { q: u.q, r: u.r }, rHex, false)
           if (s > bestScore) {
             bestScore = s
             bestTarget = rHex
