@@ -257,16 +257,62 @@ class Champion extends BlankBot implements Strategy {
       }
     }
 
-    // ── 2. Дипломатія (Угоди): нейтралізація ворожих коаліцій ───────────────
-    const activePacts = obs.pub.pact.active
-    const isPactActive = activePacts.some(
+    // Замовлення Доглядача "Утримати лінію" (+30 хв)
+    const orderBoard = obs.pub.order
+
+    // ── 2. Дипломатія (Угоди): теорія ігор "Два проти лідера" ───────────────
+    const slotOrder: SlotName[] = ['A', 'B', 'C']
+    const myIdx = slotOrder.indexOf(this.slot)
+    const myScore = obs.pub.score ? (obs.pub.score[myIdx] ?? 0) : 0
+
+    let maxOtherScore = -1
+    let leaderSlot: SlotName = this.slot
+    if (obs.pub.score) {
+      for (let i = 0; i < slotOrder.length; i++) {
+        const s = obs.pub.score[i] ?? 0
+        if (slotOrder[i] !== this.slot && s > maxOtherScore) {
+          maxOtherScore = s
+          leaderSlot = slotOrder[i]!
+        }
+      }
+    }
+    const isWeLeader = myScore >= maxOtherScore
+
+    // Перевірка активного пакту
+    const myPact = obs.pub.pact.active.find(
       (p) => p.a === this.slot || p.b === this.slot,
     )
-    if (!isPactActive && obs.mine.pact.in.length > 0 && chanLeft >= 32) {
-      const offer = obs.mine.pact.in.find((o) => o.left >= 1)
-      if (offer) {
-        orders.push({ kind: 'pact', op: 'accept', to: offer.who })
+
+    if (myPact && chanLeft >= 32) {
+      const partner = myPact.a === this.slot ? myPact.b : myPact.a
+      const partnerIdx = slotOrder.indexOf(partner)
+      const partnerScore = obs.pub.score ? (obs.pub.score[partnerIdx] ?? 0) : 0
+
+      // Розриваємо пакт, якщо ми або партнер стали лідером:
+      // Економить 10% pactTax з усього нашого доходу та знімає заборону на атаки!
+      if (isWeLeader || partnerScore >= maxOtherScore) {
+        orders.push({ kind: 'pact', op: 'break', to: partner })
         chanLeft -= 32
+      }
+    } else if (
+      !myPact &&
+      !isWeLeader &&
+      obs.mine.pact.in.length > 0 &&
+      chanLeft >= 32
+    ) {
+      // Приймаємо угоду ТІЛЬКИ якщо ми відстаємо від лідера (різниця >= 10 хв і >= 15%),
+      // і пропозиція надійшла НЕ від лідера (коаліція двох проти лідера):
+      const behindLeader =
+        maxOtherScore - myScore >= 10 &&
+        maxOtherScore - myScore >= 0.15 * maxOtherScore
+      if (behindLeader) {
+        const offer = obs.mine.pact.in.find(
+          (o) => o.left >= 1 && o.who !== leaderSlot,
+        )
+        if (offer) {
+          orders.push({ kind: 'pact', op: 'accept', to: offer.who })
+          chanLeft -= 32
+        }
       }
     }
 
@@ -325,7 +371,7 @@ class Champion extends BlankBot implements Strategy {
     if (klinoks.length > 0 && chanLeft >= 32) {
       const k = klinoks[0]!
       if (k.wait === 0) {
-        // 1. Таран: знайти пріоритетну ціль (глушник, ворожий Клинок або загарбник біля наших голок)
+        // 1. Таран: знайти пріоритетну ціль (глушник, ворожий Клинок, загарбник біля наших голок або на замовленні)
         const targetToRam =
           obs.foe.find(
             (f) =>
@@ -340,6 +386,13 @@ class Champion extends BlankBot implements Strategy {
           ) ||
           obs.foe.find(
             (f) =>
+              f.cls === 'ткач' &&
+              orderBoard &&
+              t <= orderBoard.to &&
+              orderBoard.cells.some((c) => hexDist(f, c) <= 1),
+          ) ||
+          obs.foe.find(
+            (f) =>
               f.cls === 'ткач' && this.ruins.some((r) => hexDist(f, r) <= 1),
           )
 
@@ -347,7 +400,7 @@ class Champion extends BlankBot implements Strategy {
           orders.push({ kind: 'ram', unit: k.id, target: targetToRam.id })
           chanLeft -= 32
         } else if (!targetToRam) {
-          // 2. Якщо захищати нічого — глушіння найближчої палаючої голки суперника
+          // 2. Якщо захищати нічого — глушіння соти замовлення суперника або найближчої палаючої голки
           const enemyLitNeedles = obs.own.filter(
             (c) =>
               c.owner !== null &&
@@ -356,38 +409,52 @@ class Champion extends BlankBot implements Strategy {
               !c.dark,
           )
           if (enemyLitNeedles.length > 0) {
-            const nearestEnemyNeedle = enemyLitNeedles
-              .slice()
-              .sort(
-                (a, b) =>
-                  hexDist({ q: k.q, r: k.r }, a) -
-                  hexDist({ q: k.q, r: k.r }, b),
-              )[0]!
+            // Пріоритет №1: ворожа сота активного замовлення (руйнує +30 хв опонента!)
+            let targetNeedle =
+              orderBoard && t <= orderBoard.to
+                ? enemyLitNeedles.find((en) =>
+                    orderBoard.cells.some((c) =>
+                      hexEq(c, { q: en.q, r: en.r }),
+                    ),
+                  )
+                : undefined
 
-            const d = hexDist({ q: k.q, r: k.r }, nearestEnemyNeedle)
-            if (d <= 1) {
-              if (!k.task?.jam && chanLeft >= 32) {
+            if (!targetNeedle) {
+              targetNeedle = enemyLitNeedles
+                .slice()
+                .sort(
+                  (a, b) =>
+                    hexDist({ q: k.q, r: k.r }, a) -
+                    hexDist({ q: k.q, r: k.r }, b),
+                )[0]
+            }
+
+            if (targetNeedle) {
+              const d = hexDist({ q: k.q, r: k.r }, targetNeedle)
+              if (d <= 1) {
+                if (!k.task?.jam && chanLeft >= 32) {
+                  orders.push({
+                    kind: 'jam',
+                    unit: k.id,
+                    target: {
+                      q: targetNeedle.q,
+                      r: targetNeedle.r,
+                    },
+                    hold: true,
+                  })
+                  chanLeft -= 32
+                }
+              } else if (!k.task?.goal && chanLeft >= 32) {
                 orders.push({
-                  kind: 'jam',
+                  kind: 'move',
                   unit: k.id,
-                  target: {
-                    q: nearestEnemyNeedle.q,
-                    r: nearestEnemyNeedle.r,
-                  },
-                  hold: true,
+                  q: targetNeedle.q,
+                  r: targetNeedle.r,
+                  goal: null,
+                  home: false,
                 })
                 chanLeft -= 32
               }
-            } else if (!k.task?.goal && chanLeft >= 32) {
-              orders.push({
-                kind: 'move',
-                unit: k.id,
-                q: nearestEnemyNeedle.q,
-                r: nearestEnemyNeedle.r,
-                goal: null,
-                home: false,
-              })
-              chanLeft -= 32
             }
           }
         }
@@ -414,8 +481,6 @@ class Champion extends BlankBot implements Strategy {
     const preDawnRing: Hex[] =
       !isDawn && t >= 950 ? this.ringNeedles.filter(isCandidateAvailable) : []
 
-    // Замовлення Доглядача "Утримати лінію" (+30 хв)
-    const orderBoard = obs.pub.order
     let orderTargets: Hex[] = []
     if (orderBoard && t <= orderBoard.to - 15) {
       const missingCells = orderBoard.cells.filter(
