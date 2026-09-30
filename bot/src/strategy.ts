@@ -75,11 +75,13 @@ class Champion extends BlankBot implements Strategy {
     { q: number; r: number; ticks: number }
   >()
   private stuckTargetCooldown = new Map<string, number>()
+  private lastKlinokBuiltAt = -100
 
   override init(manifestBytes: Uint8Array, slot: SlotName): void {
     super.init(manifestBytes, slot)
     this.unitLastPos.clear()
     this.stuckTargetCooldown.clear()
+    this.lastKlinokBuiltAt = -100
     const m = this.manifest as Manifest
 
     const idx = m.perm.indexOf(slot)
@@ -352,18 +354,21 @@ class Champion extends BlankBot implements Strategy {
 
     if (!isDawn && chanLeft >= 32) {
       if (tkachs.length < 3 && energy >= 90 && squadWeight <= 6 && t < 850) {
-        // Перші 3 машини — завжди Ткачі (швидка експансія та вінець)
+        // Перші 3 машини — ЗАВЖДИ Ткачі (економічний фундамент, вінець та експансія)
         orders.push({ kind: 'yard', cls: 'ткач' })
         chanLeft -= 32
       } else if (
+        tkachs.length >= 3 &&
         needDefender &&
         energy >= 50 &&
         squadWeight <= 7 &&
         klinoks.length < 1 &&
+        t - this.lastKlinokBuiltAt >= 40 &&
         t < 950
       ) {
-        // Будуємо Клинок-перехоплювач для тарана ворожих загарбників і глушників
+        // Будуємо Клинок-перехоплювач ТІЛЬКИ коли економіка стабільна (>= 3 Ткачів)
         orders.push({ kind: 'yard', cls: 'клинок' })
+        this.lastKlinokBuiltAt = t
         chanLeft -= 32
       } else if (
         tkachs.length < 4 &&
@@ -371,7 +376,7 @@ class Champion extends BlankBot implements Strategy {
         squadWeight <= 6 &&
         t < 850
       ) {
-        // Якщо загрози немає — 4-й Ткач для максимальної експансії
+        // 4-й Ткач для максимальної експансії
         orders.push({ kind: 'yard', cls: 'ткач' })
         chanLeft -= 32
       }
