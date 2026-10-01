@@ -55,6 +55,7 @@ class Champion extends BlankBot implements Strategy {
   private cherta = 6
   private lots: LotSpec[] = []
   private biddedLots = new Set<number>()
+  private impassable = new Set<string>()
 
   // Математична теплова мапа доходів сот та голок
   private cellPriceMap = new Map<string, number>()
@@ -83,6 +84,7 @@ class Champion extends BlankBot implements Strategy {
   private stuckTargetCooldown = new Map<string, number>()
   private lastKlinokBuiltAt = -100
   private lastBuildTick = -100
+  private lastPactBreakTick = -100
 
   override init(manifestBytes: Uint8Array, slot: SlotName): void {
     super.init(manifestBytes, slot)
@@ -90,6 +92,7 @@ class Champion extends BlankBot implements Strategy {
     this.stuckTargetCooldown.clear()
     this.lastKlinokBuiltAt = -100
     this.lastBuildTick = -100
+    this.lastPactBreakTick = -100
     const m = this.manifest as Manifest
 
     const idx = m.perm.indexOf(slot)
@@ -99,11 +102,16 @@ class Champion extends BlankBot implements Strategy {
     this.cherta = m.cherta
     this.lots = m.lots || []
 
-    // 1. Цінова мапа сот
+    // 1. Цінова мапа сот та непрохідні гекси
+    this.impassable.clear()
     const types = m.terrain.types
+    const typePass = types.map((t) => t.pass)
     const defaultPrice = types[0]?.min ?? 2
     for (const [q, r, typeIdx] of m.terrain.cells) {
       this.cellPriceMap.set(`${q},${r}`, types[typeIdx]?.min ?? defaultPrice)
+      if (!typePass[typeIdx]) {
+        this.impassable.add(`${q},${r}`)
+      }
     }
 
     const getPrice = (q: number, r: number) =>
@@ -268,6 +276,116 @@ class Champion extends BlankBot implements Strategy {
     return lostYield
   }
 
+  private isPathSafe(
+    from: Hex,
+    to: Hex,
+    isDawn: boolean,
+    blocked?: Set<string>,
+  ): boolean {
+    if (this.impassable.has(`${to.q},${to.r}`)) return false
+    if (!isDawn && hexDist(to, this.citadel) <= this.cherta + 1) return false
+    const d = hexDist(from, to)
+    if (d <= 1) return true
+    for (let i = 1; i < d; i++) {
+      const frac = i / d
+      const q = Math.round(from.q + frac * (to.q - from.q))
+      const r = Math.round(from.r + frac * (to.r - from.r))
+      if (this.impassable.has(`${q},${r}`)) return false
+      if (!isDawn && hexDist({ q, r }, this.citadel) <= this.cherta + 1) {
+        return false
+      }
+      if (blocked && blocked.has(`${q},${r}`)) {
+        return false
+      }
+    }
+    return true
+  }
+
+  private findSafeWaypoint(
+    from: Hex,
+    to: Hex,
+    isDawn: boolean,
+    _litNeedles?: Hex[],
+    blocked?: Set<string>,
+    escapeStep?: boolean,
+  ): Hex | null {
+    const isDirectPassable =
+      (!blocked ||
+        !blocked.has(`${to.q},${to.r}`) ||
+        (from.q === to.q && from.r === to.r)) &&
+      this.isPathSafe(from, to, isDawn, blocked)
+    if (isDirectPassable && !escapeStep) return to
+
+    // BFS на гексагональній сітці для надійного обходу цитаделі (cherta + 1 = 7), непрохідної місцевості та дружніх блокувань
+    const queue: Hex[] = [from]
+    const cameFrom = new Map<string, Hex | null>()
+    cameFrom.set(`${from.q},${from.r}`, null)
+
+    const DIRS = [
+      { q: 1, r: 0 },
+      { q: 1, r: -1 },
+      { q: 0, r: -1 },
+      { q: -1, r: 0 },
+      { q: -1, r: 1 },
+      { q: 0, r: 1 },
+    ]
+
+    let found = false
+    while (queue.length > 0) {
+      const cur = queue.shift()!
+      if (cur.q === to.q && cur.r === to.r) {
+        found = true
+        break
+      }
+      for (const d of DIRS) {
+        const nq = cur.q + d.q
+        const nr = cur.r + d.r
+        const nKey = `${nq},${nr}`
+        if (cameFrom.has(nKey)) continue
+        if (hexDist({ q: nq, r: nr }, this.citadel) > 19) continue
+        if (
+          !isDawn &&
+          hexDist({ q: nq, r: nr }, this.citadel) <= this.cherta + 1
+        )
+          continue
+        if (this.impassable.has(nKey)) continue
+        if (blocked && blocked.has(nKey) && (nq !== to.q || nr !== to.r))
+          continue
+        cameFrom.set(nKey, cur)
+        queue.push({ q: nq, r: nr })
+      }
+    }
+    if (!found) return null
+
+    const path: Hex[] = []
+    let curr: Hex | null = to
+    while (curr) {
+      path.push(curr)
+      curr = cameFrom.get(`${curr.q},${curr.r}`) ?? null
+    }
+    path.reverse()
+
+    // Якщо машина застрягла (escapeStep) — робимо крок безпосередньо по першому вузлу BFS (path[1]),
+    // який гарантовано вільний і обходить блок, звільняючи машину!
+    if (escapeStep && path.length >= 2) {
+      return path[1]!
+    }
+
+    // Знаходимо найвіддаленіший вузол вздовж шляху, до якого прямий промінь безпечний і не заблокований:
+    for (let i = path.length - 1; i >= 1; i--) {
+      const node = path[i]!
+      const nodeKey = `${node.q},${node.r}`
+      const isNodeFree =
+        !blocked ||
+        !blocked.has(nodeKey) ||
+        (node.q === to.q && node.r === to.r)
+      if (isNodeFree && this.isPathSafe(from, node, isDawn, blocked)) {
+        return node
+      }
+    }
+    return path[1] ?? null
+  }
+
   protected override think(obs: Observe): Order[] {
     const orders: Order[] = []
     const t = obs.t
@@ -326,14 +444,23 @@ class Champion extends BlankBot implements Strategy {
     for (let i = 0; i < this.lots.length; i++) {
       const lot = this.lots[i]
       if (lot && t >= lot.at - 20 && t < lot.at && !this.biddedLots.has(i)) {
-        const hasUnowned = lot.cells.some(
-          (c) => !ownedKeys.has(`${c.q},${c.r}`),
-        )
-        if (hasUnowned && energy >= 71 && chanLeft >= 32) {
+        // Ставимо ТІЛЬКИ на лоти, корисні для нашої мережі (поблизу бази або палаючих голок).
+        // Це запобігає витраті 71 енергії на ізольовані голки на іншому кінці карти,
+        // які вороги потім безкарно глушать десятками тактів!
+        const isLotUseful = lot.cells.some((c) => {
+          if (ownedKeys.has(`${c.q},${c.r}`)) return false
+          const dBase = hexDist(c, this.seat)
+          const dLit =
+            litNeedles.length > 0
+              ? Math.min(...litNeedles.map((ln) => hexDist(c, ln)))
+              : 999
+          return dBase <= 8 || dLit <= 5
+        })
+        if (isLotUseful && energy >= 71 && chanLeft >= 32) {
           orders.push({ kind: 'bid', lot: i, amount: 71 })
           this.biddedLots.add(i)
           chanLeft -= 32
-        } else if (hasUnowned && energy >= 65 && chanLeft >= 32) {
+        } else if (isLotUseful && energy >= 65 && chanLeft >= 32) {
           orders.push({ kind: 'bid', lot: i, amount: 65 })
           this.biddedLots.add(i)
           chanLeft -= 32
@@ -362,14 +489,39 @@ class Champion extends BlankBot implements Strategy {
     }
     const isWeLeader = myScore >= maxOtherScore
 
-    // Дипломатія: ніколи не платимо 10% податку на пакт (pactTax = 0.1) та зберігаємо
-    // повну свободу захоплення та глушіння голок на всьому полі.
+    // ── Стратегічна дипломатія: альянс двох проти лідера ───────────────────
+    const weakerSlot = slotOrder.find(
+      (s) => s !== this.slot && s !== leaderSlot,
+    )
     const myPact = obs.pub.pact.active.find(
       (p) => p.a === this.slot || p.b === this.slot,
     )
-    if (myPact && chanLeft >= 32) {
+
+    // 1. Прийняття вигідної пропозиції пакту:
+    const incomingOffer = obs.mine.pact.in.find((offer) => offer.left >= 2)
+    if (incomingOffer && chanLeft >= 32 && !myPact) {
+      if (incomingOffer.who !== leaderSlot || !isWeLeader) {
+        orders.push({ kind: 'pact', op: 'accept', to: incomingOffer.who })
+        chanLeft -= 32
+      }
+    } else if (
+      !myPact &&
+      obs.pub.pact.active.length === 0 &&
+      obs.mine.pact.offersLeft > 0 &&
+      obs.mine.pact.out.length === 0 &&
+      t >= 140 &&
+      t <= 250 &&
+      weakerSlot &&
+      chanLeft >= 32
+    ) {
+      // 2. Ініціатива пропозиції пакту слабшому сусіду до того, як лідер його затягне у свій союз:
+      orders.push({ kind: 'pact', op: 'offer', to: weakerSlot })
+      chanLeft -= 32
+    } else if (myPact && t >= 950 && t - this.lastPactBreakTick >= 10 && chanLeft >= 32) {
+      // 3. Розрив пакту напередодні Зорі для фінального взяття вінця:
       const partner = myPact.a === this.slot ? myPact.b : myPact.a
       orders.push({ kind: 'pact', op: 'break', to: partner })
+      this.lastPactBreakTick = t
       chanLeft -= 32
     }
 
@@ -405,7 +557,7 @@ class Champion extends BlankBot implements Strategy {
         chanLeft -= 32
       } else if (
         tkachs.length >= 3 &&
-        klinoks.length < (litNeedles.length >= 8 ? 2 : 1) &&
+        klinoks.length < (litNeedles.length >= 5 || t >= 200 || hasJams ? 2 : 1) &&
         energy >= 50 &&
         squadWeight <= 7 &&
         t - this.lastKlinokBuiltAt >= 10 &&
@@ -421,90 +573,195 @@ class Champion extends BlankBot implements Strategy {
     }
 
     // ── Керування бойовими Клинками (Sentinel & Hunter) ─────────────────────
-    for (let ki = 0; ki < klinoks.length; ki++) {
+    // Набір гексів, зайнятих дружніми машинами (для запобігання взаємного блокування bodyBlock)
+    const friendlyOccupied = new Set(
+      obs.mine.units.map((u) => `${u.q},${u.r}`),
+    )
+
+    // Сортуємо бойові Клинки:
+    // Найближчий до нашого вогнища — Sentinel (обороняє базу/мережу)
+    // Найдальший від вогнища — Hunter (проводить рейд, замовлення, глушіння)
+    const sortedKlinoks = klinoks
+      .slice()
+      .sort(
+        (a, b) =>
+          hexDist({ q: a.q, r: a.r }, this.seat) -
+          hexDist({ q: b.q, r: b.r }, this.seat),
+      )
+
+    for (let ki = 0; ki < sortedKlinoks.length; ki++) {
       if (chanLeft < 32) break
-      const k = klinoks[ki]!
+      const k = sortedKlinoks[ki]!
       if (k.wait > 0) continue
 
-      // Роль: якщо є 2 Клинки, перший (ki === 0) — Sentinel (оборона мережі),
-      // другий (ki === 1) — Hunter (рейд на лідера).
-      // Якщо 1 Клинок — він Sentinel якщо впевнено лідируємо (>25 очок), інакше Hunter.
-      // Важливо: Sentinel повинен бути поблизу нашого вогнища (<= 8 гексів). Якщо Клинок уже у ворожій зоні (> 8),
-      // він ніколи не повертається назад через усю карту — він залишається Hunter!
-      const distFromSeat = hexDist({ q: k.q, r: k.r }, this.seat)
-      const isSentinel =
-        distFromSeat <= 8 &&
-        ki === 0 &&
-        (klinoks.length >= 2 || (isWeLeader && myScore > maxOtherScore + 25))
+      const kBlocked = new Set(
+        [...friendlyOccupied].filter((pos) => pos !== `${k.q},${k.r}`),
+      )
 
-      // Будь-який ворог, що знаходиться на наших голках або біля них (загроза глушіння чи захоплення),
-      // АБО ворожий Ткач на активному замовленні Доглядача (зрив замовлення ворога!)
-      const threatIntruder = obs.foe.find(
+      // Відстеження позиції Клинка (Deadlock Watchdog)
+      const lastKPos = this.unitLastPos.get(k.id)
+      if (lastKPos && lastKPos.q === k.q && lastKPos.r === k.r) {
+        lastKPos.ticks++
+      } else {
+        this.unitLastPos.set(k.id, { q: k.q, r: k.r, ticks: 1 })
+      }
+      const kTicksAtPos = this.unitLastPos.get(k.id)!.ticks
+      const kHasPath = (k.task?.path ?? 0) > 0
+      const kIsStuck = k.stuck || (kHasPath && kTicksAtPos >= 2)
+
+      // Роль:
+      // Якщо є активне замовлення Доглядача (orderBoard) — усі Клинки виступають як Hunters
+      // для негайного зриву замовлення супротивника (таран Ткачів ворога, зрив ланцюгів)!
+      // Якщо замовлення немає — перший Клинок (ki === 0) захищає мережу (Sentinel).
+      const hasActiveOrder = !!(orderBoard && t <= orderBoard.to)
+      const hasHomeThreats = obs.foe.some(
         (f) =>
           f.p !== 'K' &&
           f.p !== this.slot &&
-          (ownedKeys.has(`${f.q},${f.r}`) ||
-            obs.mine.jams.some((j) => hexDist(f, { q: j.q, r: j.r }) <= 2) ||
-            litNeedles.some(
-              (n) =>
-                hexDist(f, { q: n.q, r: n.r }) <= (f.cls === 'клинок' ? 3 : 2),
-            ) ||
-            (f.cls === 'ткач' &&
+          (obs.mine.jams.some((j) => hexDist(f, { q: j.q, r: j.r }) <= 2) ||
+            (hexDist(f, this.seat) <= 9 &&
+              (ownedKeys.has(`${f.q},${f.r}`) ||
+                litNeedles.some(
+                  (n) =>
+                    hexDist(f, { q: n.q, r: n.r }) <=
+                    (f.cls === 'клинок' ? 3 : 2),
+                )))),
+      )
+      const isSentinel =
+        ki === 0 && !hasActiveOrder && (sortedKlinoks.length >= 2 || hasHomeThreats)
+
+      // Перевірка можливості негайного тарана (ram):
+      // Будь-який ворог у радіусі d <= 2 від цього Клинка
+      const foesInRange = obs.foe.filter(
+        (f) =>
+          f.p !== 'K' &&
+          f.p !== this.slot &&
+          hexDist({ q: k.q, r: k.r }, f) <= 2,
+      )
+      if (foesInRange.length > 0) {
+        // Пріоритет тарана:
+        // 1. Ткач ворога на замовленні або біля нього (зрив утримання лінії)
+        // 2. Ворог, що глушить нашу голку
+        // 3. Ворожий Ткач
+        // 4. Найближчий ворог
+        const targetFoe =
+          foesInRange.find(
+            (f) =>
+              f.cls === 'ткач' &&
               orderBoard &&
               t <= orderBoard.to &&
-              orderBoard.cells.some((c) => hexDist(f, c) <= 1))),
-      )
+              orderBoard.cells.some((c) => hexDist(f, c) <= 1),
+          ) ||
+          foesInRange.find((f) =>
+            obs.mine.jams.some((j) => hexDist(f, { q: j.q, r: j.r }) <= 2),
+          ) ||
+          foesInRange.find((f) => f.cls === 'ткач') ||
+          foesInRange[0]!
 
-      if (threatIntruder) {
-        const d = hexDist({ q: k.q, r: k.r }, threatIntruder)
-        if (d <= 2) {
-          if (!k.task?.ram) {
+        if (!k.task?.ram && chanLeft >= 32) {
+          orders.push({
+            kind: 'ram',
+            unit: k.id,
+            target: targetFoe.id,
+          })
+          chanLeft -= 32
+        }
+        continue
+      }
+
+      if (isSentinel) {
+        // ── РЕЖИМ СЕНТИНЕЛЯ (ОБОРОНА МЕРЕЖІ ТА ВРАЗЛИВИХ МОСТІВ) ───────────
+        // Знаходимо загрози для нашої мережі (вороги на наших голках або біля вогнища):
+        const homeThreats = obs.foe.filter(
+          (f) =>
+            f.p !== 'K' &&
+            f.p !== this.slot &&
+            (obs.mine.jams.some((j) => hexDist(f, { q: j.q, r: j.r }) <= 2) ||
+              (hexDist(f, this.seat) <= 9 &&
+                (ownedKeys.has(`${f.q},${f.r}`) ||
+                  litNeedles.some(
+                    (n) =>
+                      hexDist(f, { q: n.q, r: n.r }) <=
+                      (f.cls === 'клинок' ? 3 : 2),
+                  )))),
+        )
+
+        if (homeThreats.length > 0) {
+          // Сортуємо загрози за відстанню до Сентинеля:
+          homeThreats.sort(
+            (a, b) =>
+              hexDist({ q: k.q, r: k.r }, a) - hexDist({ q: k.q, r: k.r }, b),
+          )
+          const targetThreat = homeThreats[0]!
+          const dThreat = hexDist({ q: k.q, r: k.r }, targetThreat)
+          if (dThreat <= 2 && !k.task?.ram && chanLeft >= 32) {
             orders.push({
               kind: 'ram',
               unit: k.id,
-              target: threatIntruder.id,
+              target: targetThreat.id,
             })
             chanLeft -= 32
+          } else if (((k.task?.path ?? 0) === 0 || kIsStuck) && chanLeft >= 32) {
+            const safeThreat = this.findSafeWaypoint(
+              { q: k.q, r: k.r },
+              targetThreat,
+              isDawn,
+              litNeedles,
+              kBlocked,
+            )
+            if (
+              safeThreat &&
+              hexDist({ q: k.q, r: k.r }, safeThreat) > 0
+            ) {
+              orders.push({
+                kind: 'move',
+                unit: k.id,
+                q: safeThreat.q,
+                r: safeThreat.r,
+                goal: null,
+                home: false,
+              })
+              chanLeft -= 32
+            }
           }
-        } else if (
-          (isSentinel || d <= 10) &&
-          (k.task?.path ?? 0) === 0 &&
-          chanLeft >= 32
-        ) {
-          orders.push({
-            kind: 'move',
-            unit: k.id,
-            q: threatIntruder.q,
-            r: threatIntruder.r,
-            goal: null,
-            home: false,
-          })
-          chanLeft -= 32
-        }
-      } else if (isSentinel) {
-        // ── РЕЖИМ СЕНТИНЕЛЯ (ОБОРОНА МЕРЕЖІ ТА ВРАЗЛИВИХ МОСТІВ) ───────────
-        let sentinelTarget: Hex = this.seat
-        let maxLoss = -1
-        for (const ln of litNeedles) {
-          const kStr = `${ln.q},${ln.r}`
-          const loss = this.computeDownstreamLoss(this.slot, kStr, ownedKeys)
-          if (loss > maxLoss) {
-            maxLoss = loss
-            sentinelTarget = ln
+        } else {
+          // Якщо загроз немає — патрулювати критичну голку-міст біля вогнища:
+          let sentinelTarget: Hex = this.seat
+          let maxLoss = -1
+          for (const ln of litNeedles) {
+            const kStr = `${ln.q},${ln.r}`
+            const loss = this.computeDownstreamLoss(this.slot, kStr, ownedKeys)
+            if (loss > maxLoss) {
+              maxLoss = loss
+              sentinelTarget = ln
+            }
           }
-        }
 
-        const dToSentinel = hexDist({ q: k.q, r: k.r }, sentinelTarget)
-        if (dToSentinel > 1 && (k.task?.path ?? 0) === 0 && chanLeft >= 32) {
-          orders.push({
-            kind: 'move',
-            unit: k.id,
-            q: sentinelTarget.q,
-            r: sentinelTarget.r,
-            goal: null,
-            home: false,
-          })
-          chanLeft -= 32
+          const dToSentinel = hexDist({ q: k.q, r: k.r }, sentinelTarget)
+          if (
+            dToSentinel > 1 &&
+            ((k.task?.path ?? 0) === 0 || kIsStuck) &&
+            chanLeft >= 32
+          ) {
+            const safeSentinel = this.findSafeWaypoint(
+              { q: k.q, r: k.r },
+              sentinelTarget,
+              isDawn,
+              litNeedles,
+              kBlocked,
+            )
+            if (safeSentinel && hexDist({ q: k.q, r: k.r }, safeSentinel) > 0) {
+              orders.push({
+                kind: 'move',
+                unit: k.id,
+                q: safeSentinel.q,
+                r: safeSentinel.r,
+                goal: null,
+                home: false,
+              })
+              chanLeft -= 32
+            }
+          }
         }
       } else {
         // ── РЕЖИМ МИСЛИВЦЯ (РЕЙД НА ЛІДЕРА ТА ЗАМОВЛЕННЯ) ───────────────────
@@ -518,28 +775,49 @@ class Champion extends BlankBot implements Strategy {
         )
 
         let targetNeedle: Hex | undefined
+
         // Пріоритет №1: Замовлення Доглядача (зрив +30/60 очок супротивника)
         if (orderBoard && t <= orderBoard.to) {
-          // 1а. Чи бачимо ми вже палаючу ворожу соту замовлення?
-          const enemyOrderNeedle = enemyLitNeedles.find((en) =>
-            orderBoard.cells.some((c) => hexEq(c, { q: en.q, r: en.r })),
+          // 1а. Ворожий Ткач біля соти замовлення (перехоплення та таран)
+          const enemyOrderWeaver = obs.foe.find(
+            (f) =>
+              f.p !== 'K' &&
+              f.p !== this.slot &&
+              f.cls === 'ткач' &&
+              orderBoard.cells.some((c) => hexDist(f, c) <= 1),
           )
-          if (enemyOrderNeedle) {
-            targetNeedle = enemyOrderNeedle
+          if (enemyOrderWeaver) {
+            targetNeedle = { q: enemyOrderWeaver.q, r: enemyOrderWeaver.r }
           } else {
-            // 1б. Соти замовлення в тумані війни: йдемо до найближчої незахопленої нами соти замовлення!
-            const unownedOrderCells = orderBoard.cells.filter(
-              (c) => !ownedKeys.has(`${c.q},${c.r}`),
+            // 1б. Чи бачимо ми вже палаючу ворожу соту замовлення?
+            const enemyOrderNeedle = enemyLitNeedles.find((en) =>
+              orderBoard.cells.some((c) => hexEq(c, { q: en.q, r: en.r })),
             )
-            if (unownedOrderCells.length > 0) {
-              const sorted = unownedOrderCells
-                .slice()
-                .sort(
-                  (a, b) =>
-                    hexDist({ q: k.q, r: k.r }, a) -
-                    hexDist({ q: k.q, r: k.r }, b),
+            if (enemyOrderNeedle) {
+              targetNeedle = enemyOrderNeedle
+            } else {
+              // 1в. Соти замовлення в тумані війни: йдемо до найближчої незахопленої нами соти замовлення!
+              const unownedOrderCells = orderBoard.cells.filter(
+                (c) => !ownedKeys.has(`${c.q},${c.r}`),
+              )
+              if (unownedOrderCells.length > 0) {
+                // Якщо ми вже стоїмо на одній із сот замовлення — патрулюємо інші соти замовлення
+                const otherOrderCells = unownedOrderCells.filter(
+                  (c) => !hexEq(c, { q: k.q, r: k.r }),
                 )
-              targetNeedle = sorted[0]
+                const candidates =
+                  otherOrderCells.length > 0
+                    ? otherOrderCells
+                    : unownedOrderCells
+                const sorted = candidates
+                  .slice()
+                  .sort(
+                    (a, b) =>
+                      hexDist({ q: k.q, r: k.r }, a) -
+                      hexDist({ q: k.q, r: k.r }, b),
+                  )
+                targetNeedle = sorted[0]
+              }
             }
           }
         }
@@ -577,17 +855,40 @@ class Champion extends BlankBot implements Strategy {
 
         if (targetNeedle) {
           const d = hexDist({ q: k.q, r: k.r }, targetNeedle)
+          const isOrderCell = !!(
+            orderBoard &&
+            t <= orderBoard.to &&
+            orderBoard.cells.some((c) => hexEq(c, targetNeedle!))
+          )
           const targetCell = obs.own.find(
             (c) => c.q === targetNeedle!.q && c.r === targetNeedle!.r,
           )
           const isJamCandidate = !!(
-            targetCell?.owner &&
-            targetCell.owner !== this.slot &&
-            targetCell.owner !== 'K' &&
-            !targetCell.dark
+            (targetCell?.owner &&
+              targetCell.owner !== this.slot &&
+              targetCell.owner !== 'K' &&
+              !targetCell.dark) ||
+            (isOrderCell &&
+              !ownedKeys.has(`${targetNeedle.q},${targetNeedle.r}`))
           )
 
-          if (d <= 1 && isJamCandidate) {
+          // Якщо ціль — ворог поряд, таранимо
+          const foeAtTarget = obs.foe.find(
+            (f) =>
+              f.p !== 'K' &&
+              f.p !== this.slot &&
+              hexDist({ q: k.q, r: k.r }, f) <= 2 &&
+              hexDist(f, targetNeedle!) <= 1,
+          )
+
+          if (foeAtTarget && !k.task?.ram && chanLeft >= 32) {
+            orders.push({
+              kind: 'ram',
+              unit: k.id,
+              target: foeAtTarget.id,
+            })
+            chanLeft -= 32
+          } else if (d <= 1 && isJamCandidate) {
             if (!k.task?.jam && chanLeft >= 32) {
               orders.push({
                 kind: 'jam',
@@ -600,16 +901,44 @@ class Champion extends BlankBot implements Strategy {
               })
               chanLeft -= 32
             }
-          } else if (d > 1 && (k.task?.path ?? 0) === 0 && chanLeft >= 32) {
-            orders.push({
-              kind: 'move',
-              unit: k.id,
-              q: targetNeedle.q,
-              r: targetNeedle.r,
-              goal: null,
-              home: false,
-            })
-            chanLeft -= 32
+          } else if (
+            (d > 1 || !isJamCandidate) &&
+            ((k.task?.path ?? 0) === 0 ||
+              kIsStuck ||
+              (orderBoard &&
+                t <= orderBoard.to &&
+                k.task?.goal &&
+                !orderBoard.cells.some((c) =>
+                  hexEq(c, {
+                    q: k.task!.goal!.q,
+                    r: k.task!.goal!.r,
+                  }),
+                ))) &&
+            chanLeft >= 32
+          ) {
+            // Безпека шляху: до Зорі не перетинати зону черти цитаделі
+            const safeTarget = this.findSafeWaypoint(
+              { q: k.q, r: k.r },
+              targetNeedle,
+              isDawn,
+              litNeedles,
+              kBlocked,
+              kIsStuck,
+            )
+            if (
+              safeTarget &&
+              hexDist({ q: k.q, r: k.r }, safeTarget) > 0
+            ) {
+              orders.push({
+                kind: 'move',
+                unit: k.id,
+                q: safeTarget.q,
+                r: safeTarget.r,
+                goal: null,
+                home: false,
+              })
+              chanLeft -= 32
+            }
           }
         } else {
           // Пріоритет №3 (Розвідка та рейд): якщо ворожих голок не видно у тумані війни:
@@ -653,16 +982,29 @@ class Champion extends BlankBot implements Strategy {
                 })
                 chanLeft -= 32
               }
-            } else if ((k.task?.path ?? 0) === 0) {
-              orders.push({
-                kind: 'move',
-                unit: k.id,
-                q: reconTarget.q,
-                r: reconTarget.r,
-                goal: null,
-                home: false,
-              })
-              chanLeft -= 32
+            } else if ((k.task?.path ?? 0) === 0 || kIsStuck) {
+              const safeRecon = this.findSafeWaypoint(
+                { q: k.q, r: k.r },
+                reconTarget,
+                isDawn,
+                litNeedles,
+                kBlocked,
+                kIsStuck,
+              )
+              if (
+                safeRecon &&
+                hexDist({ q: k.q, r: k.r }, safeRecon) > 0
+              ) {
+                orders.push({
+                  kind: 'move',
+                  unit: k.id,
+                  q: safeRecon.q,
+                  r: safeRecon.r,
+                  goal: null,
+                  home: false,
+                })
+                chanLeft -= 32
+              }
             }
           }
         }
@@ -737,15 +1079,7 @@ class Champion extends BlankBot implements Strategy {
       if (!isDawn && !isRingTarget && d > 12) return -1
 
       // Безпека шляху: до Зорі не перетинати зону Черти Доглядача (запобігає загибелі Ткачів від тарана Доглядача)
-      if (!isDawn) {
-        for (const frac of [0.25, 0.5, 0.75]) {
-          const midQ = Math.round(u.q + frac * (targetHex.q - u.q))
-          const midR = Math.round(u.r + frac * (targetHex.r - u.r))
-          if (hexDist({ q: midQ, r: midR }, this.citadel) <= this.cherta + 1) {
-            return -1
-          }
-        }
-      }
+      if (!this.isPathSafe(u, targetHex, isDawn)) return -1
       const ownCell = obs.own.find(
         (c) => c.q === targetHex.q && c.r === targetHex.r,
       )
@@ -874,15 +1208,27 @@ class Champion extends BlankBot implements Strategy {
           // Машина в дорозі: надсилаємо рух ТІЛЬКИ якщо шлях зупинився і вона не гріє
           const hasPath = (u.task?.path ?? 0) > 0
           if (!hasPath && u.work === 0 && !u.task?.goal && chanLeft >= 32) {
-            orders.push({
-              kind: 'move',
-              unit: u.id,
-              q: prevTarget.q,
-              r: prevTarget.r,
-              goal: null,
-              home: false,
-            })
-            chanLeft -= 32
+            const uBlocked = new Set(
+              [...friendlyOccupied].filter((p) => p !== `${u.q},${u.r}`),
+            )
+            const safeWp = this.findSafeWaypoint(
+              { q: u.q, r: u.r },
+              prevTarget,
+              isDawn,
+              litNeedles,
+              uBlocked,
+            )
+            if (safeWp && hexDist({ q: u.q, r: u.r }, safeWp) > 0) {
+              orders.push({
+                kind: 'move',
+                unit: u.id,
+                q: safeWp.q,
+                r: safeWp.r,
+                goal: null,
+                home: false,
+              })
+              chanLeft -= 32
+            }
           }
           continue
         }
@@ -931,18 +1277,44 @@ class Champion extends BlankBot implements Strategy {
         const nearestOrder = sortedOrders[0]
         if (nearestOrder) {
           const dOrd = hexDist({ q: u.q, r: u.r }, nearestOrder)
-          const ownCell = obs.own.find(
-            (c) => c.q === nearestOrder.q && c.r === nearestOrder.r,
-          )
-          const isEnemy = !!(
-            ownCell?.owner &&
-            ownCell.owner !== this.slot &&
-            ownCell.owner !== 'K'
-          )
-          const heatTicks = isEnemy ? 24 : 8
-          const travelTicks = 2 * dOrd
-          if (t + travelTicks + heatTicks + 12 <= orderBoard.to) {
-            bestTarget = nearestOrder
+          const canLinkOrder =
+            (hexDist(nearestOrder, this.seat) <= 5 &&
+              (this.engine?.linkOk(
+                this.seat.q,
+                this.seat.r,
+                nearestOrder.q,
+                nearestOrder.r,
+              ) ??
+                true)) ||
+            litNeedles.some(
+              (ln) =>
+                hexDist(nearestOrder, ln) <= 5 &&
+                (this.engine?.linkOk(
+                  ln.q,
+                  ln.r,
+                  nearestOrder.q,
+                  nearestOrder.r,
+                ) ??
+                  true),
+            )
+          if (
+            dOrd <= 7 &&
+            canLinkOrder &&
+            this.isPathSafe(u, nearestOrder, isDawn)
+          ) {
+            const ownCell = obs.own.find(
+              (c) => c.q === nearestOrder.q && c.r === nearestOrder.r,
+            )
+            const isEnemy = !!(
+              ownCell?.owner &&
+              ownCell.owner !== this.slot &&
+              ownCell.owner !== 'K'
+            )
+            const heatTicks = isEnemy ? 24 : 8
+            const travelTicks = 2 * dOrd
+            if (t + travelTicks + heatTicks + 12 <= orderBoard.to) {
+              bestTarget = nearestOrder
+            }
           }
         }
       }
@@ -972,8 +1344,14 @@ class Champion extends BlankBot implements Strategy {
           }
         }
 
+        const friendlyOccupied = new Set(
+          obs.mine.units.map((mu) => `${mu.q},${mu.r}`),
+        )
         const unheldLit = litNeedles.filter(
-          (ln) => !otherFeedingNeedles.has(`${ln.q},${ln.r}`),
+          (ln) =>
+            !otherFeedingNeedles.has(`${ln.q},${ln.r}`) &&
+            (!friendlyOccupied.has(`${ln.q},${ln.r}`) ||
+              hexEq({ q: u.q, r: u.r }, ln)),
         )
         const candidates = unheldLit.length > 0 ? unheldLit : litNeedles
 
@@ -998,15 +1376,27 @@ class Champion extends BlankBot implements Strategy {
               chanLeft -= 32
             }
           } else if ((u.task?.path ?? 0) === 0 && chanLeft >= 32) {
-            orders.push({
-              kind: 'move',
-              unit: u.id,
-              q: bestLit.q,
-              r: bestLit.r,
-              goal: null,
-              home: true,
-            })
-            chanLeft -= 32
+            const uBlocked = new Set(
+              [...friendlyOccupied].filter((p) => p !== `${u.q},${u.r}`),
+            )
+            const safeLitWp = this.findSafeWaypoint(
+              { q: u.q, r: u.r },
+              bestLit,
+              isDawn,
+              litNeedles,
+              uBlocked,
+            )
+            if (safeLitWp && hexDist({ q: u.q, r: u.r }, safeLitWp) > 0) {
+              orders.push({
+                kind: 'move',
+                unit: u.id,
+                q: safeLitWp.q,
+                r: safeLitWp.r,
+                goal: null,
+                home: true,
+              })
+              chanLeft -= 32
+            }
           }
         }
         continue
@@ -1027,15 +1417,27 @@ class Champion extends BlankBot implements Strategy {
         removeFrom(preDawnRing)
         removeFrom(orderTargets)
 
-        orders.push({
-          kind: 'move',
-          unit: u.id,
-          q: bestTarget.q,
-          r: bestTarget.r,
-          goal: null,
-          home: false,
-        })
-        chanLeft -= 32
+        const uBlocked = new Set(
+          [...friendlyOccupied].filter((p) => p !== `${u.q},${u.r}`),
+        )
+        const safeTargetWp = this.findSafeWaypoint(
+          { q: u.q, r: u.r },
+          bestTarget,
+          isDawn,
+          litNeedles,
+          uBlocked,
+        )
+        if (safeTargetWp && hexDist({ q: u.q, r: u.r }, safeTargetWp) > 0) {
+          orders.push({
+            kind: 'move',
+            unit: u.id,
+            q: safeTargetWp.q,
+            r: safeTargetWp.r,
+            goal: null,
+            home: false,
+          })
+          chanLeft -= 32
+        }
       }
     }
 
