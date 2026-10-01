@@ -517,7 +517,12 @@ class Champion extends BlankBot implements Strategy {
       // 2. Ініціатива пропозиції пакту слабшому сусіду до того, як лідер його затягне у свій союз:
       orders.push({ kind: 'pact', op: 'offer', to: weakerSlot })
       chanLeft -= 32
-    } else if (myPact && t >= 950 && t - this.lastPactBreakTick >= 10 && chanLeft >= 32) {
+    } else if (
+      myPact &&
+      t >= 950 &&
+      t - this.lastPactBreakTick >= 10 &&
+      chanLeft >= 32
+    ) {
       // 3. Розрив пакту напередодні Зорі для фінального взяття вінця:
       const partner = myPact.a === this.slot ? myPact.b : myPact.a
       orders.push({ kind: 'pact', op: 'break', to: partner })
@@ -557,7 +562,8 @@ class Champion extends BlankBot implements Strategy {
         chanLeft -= 32
       } else if (
         tkachs.length >= 3 &&
-        klinoks.length < (litNeedles.length >= 5 || t >= 200 || hasJams ? 2 : 1) &&
+        klinoks.length <
+          (litNeedles.length >= 5 || t >= 200 || hasJams ? 2 : 1) &&
         energy >= 50 &&
         squadWeight <= 7 &&
         t - this.lastKlinokBuiltAt >= 10 &&
@@ -574,9 +580,7 @@ class Champion extends BlankBot implements Strategy {
 
     // ── Керування бойовими Клинками (Sentinel & Hunter) ─────────────────────
     // Набір гексів, зайнятих дружніми машинами (для запобігання взаємного блокування bodyBlock)
-    const friendlyOccupied = new Set(
-      obs.mine.units.map((u) => `${u.q},${u.r}`),
-    )
+    const friendlyOccupied = new Set(obs.mine.units.map((u) => `${u.q},${u.r}`))
 
     // Сортуємо бойові Клинки:
     // Найближчий до нашого вогнища — Sentinel (обороняє базу/мережу)
@@ -628,7 +632,9 @@ class Champion extends BlankBot implements Strategy {
                 )))),
       )
       const isSentinel =
-        ki === 0 && !hasActiveOrder && (sortedKlinoks.length >= 2 || hasHomeThreats)
+        ki === 0 &&
+        !hasActiveOrder &&
+        (sortedKlinoks.length >= 2 || hasHomeThreats)
 
       // Перевірка можливості негайного тарана (ram):
       // Будь-який ворог у радіусі d <= 2 від цього Клинка
@@ -701,7 +707,10 @@ class Champion extends BlankBot implements Strategy {
               target: targetThreat.id,
             })
             chanLeft -= 32
-          } else if (((k.task?.path ?? 0) === 0 || kIsStuck) && chanLeft >= 32) {
+          } else if (
+            ((k.task?.path ?? 0) === 0 || kIsStuck) &&
+            chanLeft >= 32
+          ) {
             const safeThreat = this.findSafeWaypoint(
               { q: k.q, r: k.r },
               targetThreat,
@@ -709,10 +718,7 @@ class Champion extends BlankBot implements Strategy {
               litNeedles,
               kBlocked,
             )
-            if (
-              safeThreat &&
-              hexDist({ q: k.q, r: k.r }, safeThreat) > 0
-            ) {
+            if (safeThreat && hexDist({ q: k.q, r: k.r }, safeThreat) > 0) {
               orders.push({
                 kind: 'move',
                 unit: k.id,
@@ -925,10 +931,7 @@ class Champion extends BlankBot implements Strategy {
               kBlocked,
               kIsStuck,
             )
-            if (
-              safeTarget &&
-              hexDist({ q: k.q, r: k.r }, safeTarget) > 0
-            ) {
+            if (safeTarget && hexDist({ q: k.q, r: k.r }, safeTarget) > 0) {
               orders.push({
                 kind: 'move',
                 unit: k.id,
@@ -991,10 +994,7 @@ class Champion extends BlankBot implements Strategy {
                 kBlocked,
                 kIsStuck,
               )
-              if (
-                safeRecon &&
-                hexDist({ q: k.q, r: k.r }, safeRecon) > 0
-              ) {
+              if (safeRecon && hexDist({ q: k.q, r: k.r }, safeRecon) > 0) {
                 orders.push({
                   kind: 'move',
                   unit: k.id,
