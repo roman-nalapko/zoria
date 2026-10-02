@@ -60,3 +60,13 @@ npm run generate:api
 Use the training API by default during development:
 `https://stand.zoria.net/api/v1`. Production must be an explicit environment
 choice, never a source edit.
+
+## Protocol for "проверка" (Comprehensive Audit Checklist)
+
+When the user requests **"проверка"** (or asks for a check/audit), execute this 5-point checklist thoroughly:
+
+1. **Код і життєздатність**: перевірити TypeScript-типи, лінтери, наявність прихованих багів та дедлоків, виконати необхідний рефакторинг та очистку коду.
+2. **Новини хакатону**: перевірити офіційні оновлення, стрічку новин (`docs/STATUS.md`, новинні ресурси/API хакатону, телеграм-дайджести, ефір).
+3. **Оновлення бібліотек**: перевірити `npm outdated` у корені та у папці `bot/`, версії `@zoria/*` пакетів та стан рушія/SDK.
+4. **Працездатність усього проєкту**: перевірити повну збірку клієнта, воркерів, запуск тестів (`npm run check`) та безпомилковий прогін турнірних матчів бота (`zaria-kit pack`).
+5. **Комплексна перевірка**: стан Git-репозиторію, статус CI в GitHub Actions, цілісність конфігурацій допуску (`.zoria`), чистоту робочого дерева.
