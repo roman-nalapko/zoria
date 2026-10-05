@@ -1,0 +1,21 @@
+{
+  "name": "zaria-hq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Штаб Зорі",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "npm run build && zaria-kit hq-check"
+  },
+  "zaria": {
+    "hq": "dist",
+    "lang": "uk"
+  },
+  "devDependencies": {
+    "@zoria/kit": "^1.1.1"
+  }
+}

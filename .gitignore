@@ -13,3 +13,7 @@ coverage/
 bot/node_modules/
 bot/dist/
 bot/records/
+records/
+preflight.json
+hq-report.json
+.zaria-preflight/

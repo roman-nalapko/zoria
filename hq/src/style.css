@@ -1,0 +1,133 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0d12;
+  --pane: #11141c;
+  --line: #1d2230;
+  --ink: #cfd6e4;
+  --dim: #6c7689;
+  --hot: #e8b44a;
+  --s: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  grid-template-rows: auto 1fr;
+  gap: var(--s);
+  padding: var(--s);
+  background: var(--bg);
+  color: var(--ink);
+  font: 13px/1.5 ui-sans-serif, system-ui, sans-serif;
+}
+
+.head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s);
+  padding: 0 4px var(--s);
+  border-bottom: 1px solid var(--line);
+}
+
+.mark {
+  letter-spacing: 0.12em;
+  color: var(--hot);
+}
+
+.grow {
+  flex: 1;
+}
+
+.lab,
+.hint,
+dt {
+  color: var(--dim);
+}
+
+.val,
+dd {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  margin: 0;
+}
+
+.info {
+  display: grid;
+  gap: var(--s);
+  align-content: start;
+}
+
+.pane {
+  background: var(--pane);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: var(--s) 12px;
+}
+
+h2 {
+  margin: 0 0 var(--s);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px var(--s);
+  margin: 0;
+}
+
+.act {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  background: var(--pane);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: var(--s) 12px;
+}
+
+.act label {
+  display: grid;
+  gap: 2px;
+}
+
+.act label span {
+  color: var(--dim);
+  font-size: 11px;
+}
+
+input,
+select,
+button {
+  font: inherit;
+  color: var(--ink);
+  background: #0e1118;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+input[type="range"] {
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+  border-color: var(--hot);
+  color: var(--hot);
+}
+
+.hint {
+  font-size: 11px;
+  margin: var(--s) 0 0;
+}

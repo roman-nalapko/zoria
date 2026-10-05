@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Зоря - штаб</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="head">
+      <b class="mark">ЗОРЯ</b>
+      <span class="lab" data-t="pack">запис</span>
+      <b class="val" id="packName">-</b>
+      <span class="lab" data-t="match">партія</span>
+      <b class="val" data-zaria="match"></b>
+      <span class="lab" data-t="tick">такт</span>
+      <b class="val" data-zaria="tick"></b>
+      <span class="lab" data-t="mode">шар</span>
+      <b class="val" data-zaria="mode"></b>
+      <span class="lab" data-t="focus">фокус</span>
+      <b class="val" data-zaria="focus"></b>
+      <span class="grow"></span>
+      <span class="lab" data-t="live">ефір</span>
+      <b class="val" data-zaria="live-state"></b>
+      <span class="lab" data-t="lag">відставання</span>
+      <b class="val" data-zaria="live-lag"></b>
+    </header>
+
+    <main class="info">
+      <section class="pane">
+        <h2 data-t="field">Поле: правда і віра</h2>
+        <p class="hint" data-t="fieldHint">
+          Тут буде мапа долини. Заготовка малює лише якорі - мапу, шари і
+          вибір комірки пишете ви.
+        </p>
+        <dl class="grid">
+          <dt data-t="cell">комірка</dt>
+          <dd class="val" data-zaria="cell"></dd>
+          <dt data-t="ownerTruth">голка за правдою</dt>
+          <dd class="val" data-zaria="cell-owner-truth"></dd>
+          <dt data-t="ownerBelief">голка за вірою</dt>
+          <dd class="val" data-zaria="cell-owner-belief"></dd>
+          <dt data-t="ghost">пам'ять про машину</dt>
+          <dd class="val" data-zaria="ghost-cell"></dd>
+          <dt data-t="ghostAge">вік пам'яті</dt>
+          <dd class="val" data-zaria="ghost-age"></dd>
+          <dt data-t="diff">розбіжностей</dt>
+          <dd class="val" data-zaria="diff-count"></dd>
+          <dt data-t="dark">мовчазних голок за вірою</dt>
+          <dd class="val" data-zaria="dark-count"></dd>
+        </dl>
+      </section>
+
+      <section class="pane">
+        <h2 data-t="chan">Канал і рахунок</h2>
+        <dl class="grid">
+          <dt data-t="score">рахунок фокуса</dt>
+          <dd class="val" data-zaria="score"></dd>
+          <dt data-t="needles">голок горить</dt>
+          <dd class="val" data-zaria="needles"></dd>
+          <dt data-t="bytes">байтів у кадрі</dt>
+          <dd class="val" data-zaria="bytes"></dd>
+          <dt data-t="orders">наказів подано</dt>
+          <dd class="val" data-zaria="orders"></dd>
+          <dt data-t="denied">відхилено</dt>
+          <dd class="val" data-zaria="denied"></dd>
+          <dt data-t="denyWord">причина відмови</dt>
+          <dd class="val" data-zaria="deny-word"></dd>
+          <dt data-t="denyTop">такт із піком відмов</dt>
+          <dd class="val" data-zaria="deny-top-tick"></dd>
+          <dt data-t="shares">частки пакета</dt>
+          <dd class="val" data-zaria="shares"></dd>
+        </dl>
+      </section>
+
+      <section class="pane">
+        <h2 data-t="ab">Порівняння пресетів</h2>
+        <dl class="grid">
+          <dt data-t="abWinner">краще за хвилинами мережі</dt>
+          <dd class="val" data-zaria="ab-winner"></dd>
+          <dt data-t="abDiff">різниця рахунку</dt>
+          <dd class="val" data-zaria="ab-diff"></dd>
+          <dt data-t="abTop">стаття розбіжності</dt>
+          <dd class="val" data-zaria="ab-top"></dd>
+          <dt data-t="promote">відповідь на промоут</dt>
+          <dd class="val" data-zaria="promote-status"></dd>
+        </dl>
+      </section>
+    </main>
+
+    <aside class="act">
+      <h2 data-t="organs">Органи</h2>
+      <label><span data-t="oPack">запис</span><select data-zaria="go-pack"></select></label>
+      <label><span data-t="oMatch">партія</span>
+        <select data-zaria="go-match">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </label>
+      <label><span data-t="oTick">такт</span>
+        <input type="range" id="tickRange" min="0" max="0" step="1" value="0" />
+        <input type="number" data-zaria="go-tick" min="0" value="0" />
+      </label>
+      <label><span data-t="oMode">шар</span>
+        <select data-zaria="go-mode">
+          <option value="truth">truth</option>
+          <option value="belief">belief</option>
+          <option value="both">both</option>
+        </select>
+      </label>
+      <label><span data-t="oFocus">фокус</span><select data-zaria="go-focus"></select></label>
+      <label><span data-t="oCell">комірка</span><input type="text" data-zaria="go-cell" placeholder="q,r" /></label>
+      <label><span data-t="oUnit">машина</span><input type="text" data-zaria="go-unit" placeholder="K-K1" /></label>
+      <label><span data-t="oOrder">наказ</span><input type="number" data-zaria="go-order" min="0" value="0" /></label>
+      <label><span data-t="oPreset">пресет</span>
+        <select data-zaria="go-preset">
+          <option value="рівний">рівний</option>
+          <option value="обхідник">обхідник</option>
+        </select>
+      </label>
+      <button data-zaria="do-promote" data-t="oPromote">перевести в бій</button>
+      <p class="hint" id="note"></p>
+    </aside>
+
+    <script type="module" src="./hq.js"></script>
+  </body>
+</html>

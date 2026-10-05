@@ -5,3 +5,10 @@ dist
 dist-worker
 node_modules
 npm-debug.log
+**/node_modules
+**/dist
+records
+*.log
+preflight.json
+hq-report.json
+.zaria-preflight
