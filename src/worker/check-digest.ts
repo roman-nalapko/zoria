@@ -91,6 +91,9 @@ async function main(): Promise<void> {
         msg += '\n🏆 НОВІ ТУРНІРНІ ЕТАПИ (ЧАСТИНА ЗАВДАННЯ):\n'
         for (const st of unackedStages) {
           msg += `• ${st.title} (ID: ${st.id})\n`
+          if (st.body) {
+            msg += `${st.body.trim()}\n`
+          }
           const acked = await zoria.ackStage(token, st.id)
           if (acked) {
             msg += `  (отримання підтверджено сервером ✅)\n`
@@ -109,8 +112,65 @@ async function main(): Promise<void> {
     msg += `• Зміна статусу репозиторію: ${summary.repositoryAt}\n`
   }
 
+  console.log('=== DIGEST MESSAGE ===\n' + msg)
+
+  try {
+    const news = await zoria.getNews(token)
+    if (news && news.length > 0) {
+      console.log('=== TOURNAMENT NEWS ITEMS ===')
+      for (const n of news) {
+        console.log(`\n📰 [${n.publishedAt}] ${n.title}`)
+        console.log(n.body)
+      }
+      console.log('=============================')
+    }
+  } catch {
+    // Non-fatal
+  }
+
+  try {
+    const stages = await zoria.getStages(token)
+    if (stages && stages.length > 0) {
+      console.log('=== TOURNAMENT STAGES ===')
+      for (const st of stages) {
+        console.log(
+          `\n🏆 Stage: ${st.title} (ID: ${st.id}, Released: ${st.releasedAt}, Acked: ${st.acknowledgedAt ?? 'no'})`,
+        )
+        if (st.body) {
+          console.log(`--- BODY ---:\n${st.body}`)
+        }
+        if (st.errata) {
+          console.log(`--- ERRATA ---:\n${st.errata}`)
+        }
+      }
+      console.log('========================')
+    }
+  } catch {
+    // Non-fatal
+  }
+
+  try {
+    const inbox = await zoria.getInbox(token)
+    if (inbox && inbox.length > 0) {
+      console.log('=== INBOX MESSAGES ===')
+      for (const item of inbox) {
+        const details = await zoria.getMessage(token, item.id)
+        console.log(
+          `\n✉️ [${item.createdAt}] ${item.title} (ID: ${item.id}, Read: ${item.readAt ?? 'unread'})`,
+        )
+        if (details?.body) {
+          console.log(details.body)
+        }
+      }
+      console.log('======================')
+    }
+  } catch {
+    // Non-fatal
+  }
+
   const delivered = await telegram.send(msg)
   console.log(JSON.stringify({ delivered, event: 'telegram-digest-sent' }))
 }
 
 await main()
+

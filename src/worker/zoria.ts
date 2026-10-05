@@ -332,11 +332,40 @@ export class ZoriaWorkerClient {
   }
 
   /**
+   * Retrieve published news items (/news).
+   */
+  async getNews(bearerToken: string): Promise<Array<{
+    id: string
+    title: string
+    body: string
+    publishedAt: string
+  }> | null> {
+    if (!bearerToken) return null
+    const internal = await this.#requestWithBearer('/news', bearerToken)
+    if (!internal.ok || internal.rawBody === null) return null
+    try {
+      const parsed = JSON.parse(internal.rawBody) as Record<string, unknown>
+      const items = Array.isArray(parsed.items) ? parsed.items : []
+      return items.map((item: Record<string, unknown>) => ({
+        body: typeof item.body === 'string' ? item.body : '',
+        id: typeof item.id === 'string' ? item.id : '',
+        publishedAt:
+          typeof item.publishedAt === 'string' ? item.publishedAt : '',
+        title: typeof item.title === 'string' ? item.title : '',
+      }))
+    } catch {
+      return null
+    }
+  }
+
+  /**
    * Retrieve released stages.
    */
   async getStages(bearerToken: string): Promise<Array<{
     id: string
     title: string
+    body?: string
+    errata?: string | null
     releasedAt: string
     acknowledgedAt: string | null
   }> | null> {
@@ -349,6 +378,8 @@ export class ZoriaWorkerClient {
       return items.map((item: Record<string, unknown>) => ({
         acknowledgedAt:
           typeof item.acknowledgedAt === 'string' ? item.acknowledgedAt : null,
+        body: typeof item.body === 'string' ? item.body : '',
+        errata: typeof item.errata === 'string' ? item.errata : null,
         id: typeof item.id === 'string' ? item.id : '',
         releasedAt: typeof item.releasedAt === 'string' ? item.releasedAt : '',
         title: typeof item.title === 'string' ? item.title : '',
