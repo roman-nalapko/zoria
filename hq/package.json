@@ -16,6 +16,10 @@
     "lang": "uk"
   },
   "devDependencies": {
-    "@zoria/kit": "^1.1.1"
+    "@zoria/engine": "^1.1.1",
+    "@zoria/kit": "^1.1.1",
+    "@zoria/protocol": "^1.1.1",
+    "@zoria/sdk": "^1.1.1",
+    "esbuild": "^0.28.2"
   }
 }

@@ -10,7 +10,8 @@ export const S = {
     live: 'ефір',
     lag: 'відставання',
     field: 'Поле: правда і віра',
-    fieldHint: 'Тут буде мапа долини. Заготовка малює лише якорі - мапу, шари і вибір комірки пишете ви.',
+    fieldHint:
+      'Тут буде мапа долини. Заготовка малює лише якорі - мапу, шари і вибір комірки пишете ви.',
     cell: 'комірка',
     ownerTruth: 'голка за правдою',
     ownerBelief: 'голка за вірою',
@@ -55,7 +56,8 @@ export const S = {
     live: 'broadcast',
     lag: 'lag',
     field: 'Field: truth and belief',
-    fieldHint: 'The valley map goes here. The skeleton draws only the anchors - the map, the layers and the cell choice are yours to write.',
+    fieldHint:
+      'The valley map goes here. The skeleton draws only the anchors - the map, the layers and the cell choice are yours to write.',
     cell: 'cell',
     ownerTruth: 'needle by truth',
     ownerBelief: 'needle by belief',
@@ -91,4 +93,4 @@ export const S = {
     liveName: 'broadcast',
     note: 'The anchors are empty: the values are yours to compute. See the comments in hq.js.',
   },
-};
+}

@@ -1,5 +1,9 @@
 dist
+dist-worker
 coverage
 node_modules
+records
+hq/dist
+hq/src/index.html
 src/api/schema.d.ts
 docs/api/part1.openapi.yaml

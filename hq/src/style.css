@@ -23,7 +23,10 @@ body {
   padding: var(--s);
   background: var(--bg);
   color: var(--ink);
-  font: 13px/1.5 ui-sans-serif, system-ui, sans-serif;
+  font:
+    13px/1.5 ui-sans-serif,
+    system-ui,
+    sans-serif;
 }
 
 .head {
@@ -53,7 +56,7 @@ dt {
 .val,
 dd {
   font-variant-numeric: tabular-nums;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   margin: 0;
 }
 
@@ -117,7 +120,7 @@ button {
   padding: 3px 6px;
 }
 
-input[type="range"] {
+input[type='range'] {
   padding: 0;
 }
 
