@@ -21,6 +21,7 @@ jobs:
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       ZORIA_DISPLAY_NAME: Zoria
       ZORIA_INVITATION: ${{ secrets.ZORIA_INVITATION }}
+      ZORIA_NPM_AUTH: ${{ secrets.ZORIA_NPM_AUTH }}
       ZORIA_PASSWORD: ${{ secrets.ZORIA_PASSWORD }}
       ZORIA_REPOSITORY_URL: https://github.com/roman-nalapko/zoria
       ZORIA_USERNAME: roman-nalapko
