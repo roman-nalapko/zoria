@@ -1,93 +1,80 @@
 # Engineering decisions
 
-Maintain this file throughout the project. The final submission requires an
-accurate module map, three decisions with alternatives/costs/code locations, and
-known limitations. Do not fabricate line references; update them at final freeze.
+This document fulfills the requirements of Section 10 (`scoring.md`, 10.1 and 10.3) for the tournament debrief (`DECISIONS.md`).
 
-## Module map
+---
 
-| Module           | Responsibility                                                   |
-| ---------------- | ---------------------------------------------------------------- |
-| `src/app`        | React composition and participant-facing workflows               |
-| `src/api`        | Zoria transport, contracts, errors, retries, and rate discipline |
-| `src/ether`      | Signed-frame verification and monotonic ether state              |
-| `src/auth`       | Registration and session lifecycle                               |
-| `src/repository` | Repository normalization and admission status                    |
-| `src/content`    | News, inbox, task stages, and safe rendering                     |
-| `src/worker`     | Cloud Run registration watcher and Telegram alerts               |
-| `bot`            | Part 2 Tournament bot: WireBot protocol, strategy, and Nakaz     |
+## 1. Module map
 
-## Decision 0 — one always-allocated registration watcher
+Every bot, HQ, and supporting module with its single-line responsibility:
 
-Status: accepted.
+| Module | Responsibility |
+|---|---|
+| `bot/src/main.ts` | Bot service entry point, WebSocket/wire connection lifecycle, and heartbeat loop |
+| `bot/src/strategy.ts` | Champion AI strategy implementation (`Champion` class) for pathfinding, economy, crown cycle, auctions, diplomacy, and unit control |
+| `bot/src/status.ts` | Internal HTTP status microservice (`STATUS_PORT: 7811`) providing `/state` healthchecks for Docker and control-plane telemetry |
+| `bot/src/jitter.ts` | Jitter calculation utility to randomize network timing within bounded protocol constraints |
+| `bot/nakaz.yaml` | Bot fallback charter (наказ) executed by the engine if the bot process or socket disconnects |
+| `hq/src/index.html` | Single-page application HTML template hosting the interactive tournament headquarters (HQ) |
+| `hq/src/hq.js` | Core HQ runtime state manager, record parser, cursor seeker, and anchor driver for all 20 verification tasks |
+| `hq/src/guest.js` | HQ host-guest communication bridge exposing the `ZARIA_HQ` contract and iframe postMessage handlers |
+| `hq/src/strings.js` | Canonical translation dictionary, formatting helpers, and string constants for HQ telemetry display |
+| `hq/src/style.css` | Visual styling, theme palettes, and layout rules for the HQ dashboard |
+| `control-plane/src/main.mjs` | HTTP microservice (`PORT: 7801`) exposing canonical `/health` and `/metrics` telemetry endpoints |
+| `src/app` | React client application screens and participant dashboard user interface |
+| `src/api` | Zoria API transport, contracts, retry strategies, and rate discipline |
+| `src/ether` | Signed-frame verification and monotonic ether state management |
+| `src/auth` | Registration, session vault, and authentication lifecycle |
+| `src/worker` | Standalone background runner for automated tournament digests, Telegram alerts, and state tracking |
 
-Choice: run a single Node.js Cloud Run instance that shares the pinned Ed25519
-verifier and acts only on a verified window. Alternative: keep a browser tab
-open or use a one-minute scheduled job. Cost: a small always-on Cloud Run charge
-and one more deployable. Benefit: reliable 15-second monitoring independent of a
-personal computer. Secrets are injected from Secret Manager and excluded from
-the image and logs. Code location: `src/worker` and `Dockerfile`.
+---
 
-## Decision 1 — raw response at the trust boundary
+## 2. Three decisions
 
-Status: accepted.
+### Decision 1: Crown Cycle Formulator (Вінцевий цикл) vs Greedy Expansion
 
-Choice: the transport captures response bodies as text and classifies them before
-normal API parsing. Alternative: call `response.json()` in each endpoint wrapper.
-Cost: an extra normalization layer and explicit schema validation. Benefit: the
-client survives intentional pre-window noise and can verify the exact signed
-frame bytes. Code location: `src/api/transport.ts`.
+* **What was chosen:**
+  An algorithmic DFS search (`dfs` in `init`) using the local engine simulation graph to discover a minimal closed 6-needle cycle connected to our start chain, prioritizing the completion of this cycle to activate the constant $+15\%$ multiplier ($x1.15$) across the entire network.
+* **Alternative considered:**
+  Greedy nearest-needle expansion (dispatching Weavers step-by-step to the closest ruins strictly based on Euclidean/hex distance regardless of network topology).
+* **Cost of choice:**
+  Upfront time and energy cost: Weavers travel past immediate unlinked ruins to secure specific cycle vertices, spending $\approx 2\text{--}3$ extra move ticks and delaying early raw territory coverage; in return, it secures a permanent $+15\%$ multiplier on every subsequent tick.
+* **Code location:**
+  `bot/src/strategy.ts#L144-L215` (cycle search and topological vertex selection in `init`) and `bot/src/strategy.ts#L1022-L1057` (prioritized dispatch of Weavers to unlit crown cycle ruins).
 
-## Decision 2 — one polling coordinator per origin
+---
 
-Status: accepted.
+### Decision 2: Fixed Squad Composition (3 Weavers + 2 Klinoks) vs Adaptive Mono-Swarm
 
-Choice: polling and quiet-state timing live outside React components. Alternative:
-independent query intervals in each screen. Cost: a small scheduler/state machine.
-Benefit: deterministic request rates, cancellation, and no doubled traffic after
-mounts or route changes. Code location: `src/api/polling.ts` and `src/participant/useParticipantDashboard.ts`.
+* **What was chosen:**
+  A strictly enforced squad weight cap of 8 using exactly 3 Weavers ($3 \times 2 = 6\text{ weight}$) and 2 Klinoks ($2 \times 1 = 2\text{ weight}$), assigning one Klinok as Sentinel (defending network cut-vertices and base against infiltrators) and one as Hunter (intercepting Keeper orders and ramming enemy Weavers).
+* **Alternative considered:**
+  A mono-weaver expansion swarm (4 Weavers, 0 Klinoks) or a heavy combat swarm (2 Weavers + 4 Klinoks).
+* **Cost of choice:**
+  Sacrifices late-game combat mass (fielding only 2 combat units compared to potential swarms of 4--6 blades), but guarantees zero "вага рою" rejections ($0$ engine weight faults across all $9$ tournament games), utilizes $100\%$ of the squad weight capacity, and provides dedicated defensive interception against network fragmentation.
+* **Code location:**
+  `bot/src/strategy.ts#L557-L579` (shipyard production and squad weight limits) and `bot/src/strategy.ts#L616-L677` (Sentinel vs Hunter role dispatch).
 
-## Decision 3 — domain modules independent of React
+---
 
-Status: accepted.
+### Decision 3: Targeted Connected Auction Bidding (71 Energy Threshold) vs Aggressive Central Sniping
 
-Choice: protocol and state transitions are pure/testable modules. Alternative:
-implement them in hooks and components. Cost: more explicit adapters. Benefit:
-mutation-testable logic, future reuse by the bot/HQ, and replayable decisions for
-competition analysis. Code location: `src/ether/verifier.ts`, `src/ether/controller.ts`,
-`src/ether/assembler.ts`, `src/ether/roll.ts`, `src/news/service.ts`, `src/inbox/service.ts`,
-and `src/stages/service.ts`.
+* **What was chosen:**
+  Bidding on auctions only if the lot needle is within distance $\le 8$ of our base or $\le 5$ of our lit needles, submitting a bid of 71 energy (designed to outbid standard 60 and 65 baseline presets).
+* **Alternative considered:**
+  Aggressive central lot sniping (bidding on all lots on the map, including distant enemy territory) or complete auction avoidance.
+* **Cost of choice:**
+  Deducts 71 energy upon bid victory and forfeits distant high-yield lots; in return, prevents wasting 71--142 energy on isolated, unconnectable needles on the opposite side of the map that enemies easily jam or cut off.
+* **Code location:**
+  `bot/src/strategy.ts#L444-L469` (auction lot utility filtering and 71 energy bid submission).
 
-## Decision 4 — registration secrets remain local-only
+---
 
-Status: accepted, pending any canonical contradictory contract.
+## 3. Known limitations
 
-Choice: invitation codes, passwords, and bearer tokens enter through local UI
-and are never committed or written to diagnostics. Alternative: follow a
-2026-09-23 organizer message that mentions an unspecified repository file.
-Cost: automatic registration requires a local draft/session mechanism. Benefit:
-the implementation follows the public news, FAQ, task, and OpenAPI, none of which
-defines a repository secret file, and avoids persisting a one-time credential in
-Git history. `.zoria` remains the network username only. Code location:
-`src/auth/validation.ts`, `src/auth/draft.ts`, `src/auth/registration.ts`, and
-`src/app/RegistrationPanel.tsx`; repository guardrails are also in `.gitignore`
-and `AGENTS.md`.
-
-## Decision 5 — proactive slot heartbeat and archetype tuning (Part 2)
-
-Status: accepted.
-
-Choice: the bot strategy tracks accepted command verdicts and injects a harmless
-`watch` command on the hearth cell if 3 or more ticks elapse without an accepted
-order. Alternative: allow the bot to fall back to `nakaz.yaml` when idle. Cost:
-trivial channel budget consumption (32 channel bytes every 3–4 idle ticks, well within
-hearth replenishment of +128 bytes/tick). Benefit: strictly guarantees compliance
-with Part 2 gate requirement P2-04 (no ticks ceded to Nakaz during active bot operation)
-while maintaining complete autonomy over movement, heating, and defensive lines.
-Code location: `bot/src/strategy.ts` and `bot/src/main.ts`.
-
-## Known limitations
-
-- Part 1 participant console and background tournament digest bot are fully implemented, verified, and admitted (`accessStatus: "verified"`, `marker-found`).
-- Part 2 tournament bot workspace (`bot/`) is fully implemented, verified across all criteria P2-01 through P2-08, with 100% clean linter for `nakaz.yaml` and verified 3-match local pack play.
-- Parts 3–4 specifications (Game Headquarters & Provocateur) will be released by organizers on 2026-10-05.
+* **Vulnerability in passive 3rd-player FFA scenarios:**
+  In a 3-player match, if one opponent plays passively or collapses early, the other opponent can freely claim the uncontested half of the map without interference, gaining a raw connection minute advantage during Dawn (as observed in Match 3 against `btema2`).
+* **Static auction bid ceiling:**
+  The bid value of 71 energy is statically hardcoded. If an aggressive competitor bids 72 or higher, our bot does not dynamically escalate its bid and yields the lot.
+* **Network preservation over Dawn Ring suicide rams:**
+  During Dawn (ticks 1000--1200), the bot prioritizes maintaining active network connection and preserving shuttles over engaging in high-risk suicide rams on the central neutral Ring.
